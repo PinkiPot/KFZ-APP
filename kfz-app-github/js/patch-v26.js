@@ -137,6 +137,14 @@
       writeLocal26(INDEX_KEY_26,state.saveHistoryIndex);
       writeLocal26(STORE_KEY_26,state); writeLocal26(LIVE_KEY_26,state); writeLocal26(NEVER_LOSE_KEY_26,state);
     }
+    // Nach: writeLocal26(NEVER_LOSE_KEY_26,state);
+try {
+  if (typeof saveToSupabase === 'function') {
+    await saveToSupabase(state);
+  }
+} catch (err) {
+  console.warn('Supabase Sync Fehler:', err);
+}
     updateSaveInfo26(); toast('Gespeichert · Historie aktualisiert');
   }
 
@@ -151,6 +159,18 @@
       updateSaveInfo26();
       return;
     }
+    state.unsavedChanges=false; state.savedAt=new Date().toISOString();
+    writeLocal26(STORE_KEY_26,state); writeLocal26(LIVE_KEY_26,state); writeLocal26(NEVER_LOSE_KEY_26,state); writeLocal26(DRAFT_KEY_26,state);
+    
+    // --- HIER NEU EINGEFÜGT FÜR SUPABASE: ---
+    if (typeof saveToSupabase === 'function' && state.savePrefs?.mode !== 'manual') {
+      saveToSupabase(state).catch(e => console.warn(e));
+    }
+    // ----------------------------------------
+
+    updateSaveInfo26();
+  };
+   
     state.unsavedChanges=false; state.savedAt=new Date().toISOString();
     writeLocal26(STORE_KEY_26,state); writeLocal26(LIVE_KEY_26,state); writeLocal26(NEVER_LOSE_KEY_26,state); writeLocal26(DRAFT_KEY_26,state);
     updateSaveInfo26();
