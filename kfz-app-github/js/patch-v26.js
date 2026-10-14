@@ -1,4 +1,89 @@
-/* ---------------- V26.07.26: Hotspot-Mindestgröße, Beschreibung-Dropdown, Rechen/Farbfix, Werkzeug-Höhe, manuelle Speicherung mit Historie ---------------- */
+// ==========================================
+// KFZ-APP PATCH-MODUL & CLOUDFLARE AUTH (WEG A)
+// ==========================================
+
+(function() {
+  // 1. Cloudflare E-Mail abrufen und echte Daten aus Supabase laden
+  async function initCloudflareAuth() {
+    let email = "kirchbergpa@gmail.com";
+
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const identity = await res.json();
+        if (identity && identity.email) {
+          email = identity.email;
+        }
+      }
+    } catch (e) {
+      console.log("Cloudflare Access lokal oder nicht aktiv, nutze Standard-User:", email);
+    }
+
+    // Identität im Anwendungsstatus setzen
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    // Anzeige im Header aktualisieren
+    const userDisplay = document.getElementById('user-display') || document.querySelector('.user-chip');
+    if (userDisplay) {
+      userDisplay.textContent = email;
+    }
+
+    // Echte Daten aus Supabase synchronisieren
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          console.log("Supabase-Daten erfolgreich geladen für:", email);
+          if (typeof renderApp === 'function') renderApp();
+          else if (typeof renderAll === 'function') renderAll();
+        }
+      } catch (err) {
+        console.error("Fehler beim Abrufen aus Supabase:", err);
+      }
+    }
+  }
+
+  // 2. Speicher-Button mit Supabase verbinden
+  function setupSaveHandler() {
+    const saveBtn = document.getElementById('save-btn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        if (typeof saveToSupabase === 'function' && window.state) {
+          saveBtn.disabled = true;
+          saveBtn.textContent = '⏳ Speichern...';
+          try {
+            await saveToSupabase(window.state);
+            saveBtn.textContent = '✅ Gespeichert!';
+          } catch (e) {
+            saveBtn.textContent = '❌ Fehler!';
+          }
+          setTimeout(() => {
+            saveBtn.disabled = false;
+            saveBtn.textContent = '💾 Speichern';
+          }, 2000);
+        }
+      };
+    }
+  }
+
+  // Initialisieren beim Laden der Seite
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initCloudflareAuth();
+      setupSaveHandler();
+    });
+  } else {
+    initCloudflareAuth();
+    setupSaveHandler();
+  }
+})();/* ---------------- V26.07.26: Hotspot-Mindestgröße, Beschreibung-Dropdown, Rechen/Farbfix, Werkzeug-Höhe, manuelle Speicherung mit Historie ---------------- */
 (function(){
   'use strict';
   const VERSION_26='V26.07.26';
