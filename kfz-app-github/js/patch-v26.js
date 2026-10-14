@@ -1,4 +1,188 @@
 // =========================================================================
+// KFZ-APP PATCH-V26: NATIVE DEMO-INITIALISIERUNG, SYNC & STRG + Z
+// =========================================================================
+
+(function() {
+  // --- 1. VERLAUFSSPEICHER (STRG + Z / STRG + Y) ---
+  const undoStack = [];
+  const redoStack = [];
+  let isUndoRedoActive = false;
+
+  window.recordAppSnapshot = function() {
+    if (isUndoRedoActive || !window.state) return;
+    try {
+      const snap = JSON.stringify(window.state);
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
+        undoStack.push(snap);
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack.length = 0;
+      }
+    } catch(e) {}
+  };
+
+  window.executeUndo = function() {
+    if (undoStack.length === 0 || !window.state) {
+      if (typeof showToast === 'function') showToast('Keine weiteren Schritte im Verlauf.');
+      return;
+    }
+    try {
+      isUndoRedoActive = true;
+      redoStack.push(JSON.stringify(window.state));
+      const prev = JSON.parse(undoStack.pop());
+      Object.assign(window.state, prev);
+      refreshView();
+      if (typeof showToast === 'function') showToast('↩ Schritt rückgängig gemacht');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  window.executeRedo = function() {
+    if (redoStack.length === 0 || !window.state) return;
+    try {
+      isUndoRedoActive = true;
+      undoStack.push(JSON.stringify(window.state));
+      const next = JSON.parse(redoStack.pop());
+      Object.assign(window.state, next);
+      refreshView();
+      if (typeof showToast === 'function') showToast('↪ Schritt wiederhergestellt');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  function refreshView() {
+    if (typeof renderTabs === 'function') renderTabs();
+    if (typeof renderApp === 'function') renderApp();
+    else if (typeof renderAll === 'function') renderAll();
+    else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+    else if (typeof renderSheet === 'function' && window.state) renderSheet(window.state.activeSheetId);
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          window.executeRedo();
+        } else {
+          const tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+            e.preventDefault();
+            window.executeUndo();
+          }
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        window.executeRedo();
+      }
+    }
+  });
+
+  document.addEventListener('focusin', function(e) {
+    if (e.target && (e.target.isContentEditable || e.target.tagName === 'INPUT')) {
+      window.recordAppSnapshot();
+    }
+  });
+
+  // --- 2. NATIVES BOOTEN IN DEN EXAKTEN DEMO-ZUSTAND ---
+  async function launchExactDemo() {
+    // Dunkelmodus sicherstellen
+    document.body.classList.add('dark');
+
+    // Nativer App.js Login als Admin (erzeugt die exakte Demo-Ansicht mit allen Reitern und Symbolen)
+    const quickAdmin = document.querySelector('.quick-login[data-user="admin"]');
+    const loginBtn = document.getElementById('loginBtn');
+    if (quickAdmin) quickAdmin.click();
+    else if (loginBtn) loginBtn.click();
+    else if (typeof window.login === 'function') window.login('admin', 'admin');
+
+    // Cloudflare E-Mail abrufen (ohne die Demo-Rolle zu stören)
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {}
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+      window.state.darkMode = true;
+    }
+
+    // Supabase Sync
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          document.body.classList.add('dark');
+        }
+      } catch (err) {
+        console.error("Supabase Sync:", err);
+      }
+    }
+
+    // Erstes Sheet (A3 8P) aktivieren
+    if (window.state) {
+      const sheets = window.state.sheets || (window.WORKBOOK_DATA && window.WORKBOOK_DATA.sheets);
+      if (sheets && sheets.length > 0 && !window.state.activeSheetId) {
+        window.state.activeSheetId = sheets[0].id || sheets[0].name;
+      }
+    }
+
+    // Rendern
+    refreshView();
+
+    // Den ersten Tab anklicken
+    setTimeout(() => {
+      const activeTab = document.querySelector('#tabs .tab.active, #tabs .tab');
+      if (activeTab) activeTab.click();
+    }, 150);
+
+    // Speichern-Button mit Supabase verbinden
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        const origText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichern...';
+        try {
+          if (typeof saveToSupabase === 'function' && window.state) {
+            await saveToSupabase(window.state);
+          }
+          saveBtn.textContent = '✅ Gespeichert!';
+          const saveInfo = document.getElementById('saveInfo');
+          if (saveInfo) {
+            saveInfo.textContent = 'Auto · ' + new Date().toLocaleTimeString();
+          }
+        } catch(e) {
+          saveBtn.textContent = '❌ Fehler!';
+        }
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = origText;
+        }, 1500);
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(launchExactDemo, 100));
+  } else {
+    setTimeout(launchExactDemo, 100);
+  }
+})();// =========================================================================
 // KFZ-APP PATCH-V26: ORIGINAL INITIALISIERUNG, SETTINGS, SYNC & STRG+Z
 // =========================================================================
 
