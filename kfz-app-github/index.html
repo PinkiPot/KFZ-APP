@@ -47,7 +47,12 @@
     .brand-title span{font-size:12px;opacity:.88}
     .top-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
     .user-chip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:6px 10px;font-weight:800}
-    .version-chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px}
+    .version-chip{background:rgba(255,255,255,.16);border:1px solid rgba(255,255,255,.20);border-radius:999px;padding:6px 10px;font-weight:800;font-size:12px;cursor:pointer}
+
+    .release-float{position:fixed;left:18px;bottom:18px;z-index:60;box-shadow:var(--shadow)}
+    .floating-gear{position:fixed;right:18px;bottom:18px;z-index:60;display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:8px 14px;cursor:pointer;box-shadow:var(--shadow);font-weight:800;color:var(--primary)}
+    .floating-gear:hover{transform:translateY(-2px)}
+    .gear-symbol{font-size:18px}
 
     .tabs{position:sticky;top:70px;z-index:40;background:color-mix(in srgb,var(--bg) 90%, transparent);backdrop-filter:blur(16px);border-bottom:1px solid var(--border);padding:9px clamp(14px,3vw,28px);display:flex;gap:8px;overflow:auto}
     .tab{white-space:nowrap;background:var(--surface);color:var(--primary);border:1px solid var(--border);box-shadow:var(--softShadow);min-width:var(--tabW,120px);position:relative}
@@ -84,9 +89,14 @@
     .topic-body{overflow:auto}
     .table-wrap{overflow:auto;max-height:70vh}
     .kfz-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:max-content;color:var(--tableText)}
-    .kfz-table th{background:var(--secondary);color:var(--headText);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 7px;text-align:center;vertical-align:middle;font-weight:900;min-width:72px;max-width:220px}
+    
+    /* Reparierte Spaltenköpfe ohne Überlappen */
+    .kfz-table th{position:relative;background:var(--secondary);color:var(--headText);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 8px;text-align:center;vertical-align:middle;font-weight:900;min-width:72px;white-space:nowrap}
     .kfz-table thead tr:first-child th{background:color-mix(in srgb,var(--primary) 14%, var(--secondary))}
-    .kfz-table th[contenteditable=true]{outline:2px solid #f0c85a;background:var(--accent)!important}
+    .kfz-table th > div, .th-content, .th-wrap{display:inline-flex;align-items:center;justify-content:center;gap:6px;width:100%}
+    .kfz-table th button, .kfz-table th .btn-icon, .kfz-table th [data-action]{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;min-width:18px;min-height:18px;padding:0;margin:0;border-radius:4px;font-size:11px;background:rgba(31,78,121,.15);color:#1f4e79;box-shadow:none;transform:none;opacity:.35;transition:opacity .2s;cursor:pointer;vertical-align:middle}
+    .kfz-table th:hover button, .kfz-table th:hover .btn-icon, .kfz-table th:hover [data-action]{opacity:1}
+    
     .row-tools{width:38px;min-width:38px;position:sticky;left:0;z-index:3;background:var(--surface2)!important}
     .kfz-table td{position:relative;background:var(--cellBg,var(--surface));border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:var(--density-cell-y) var(--density-cell-x);vertical-align:top;min-width:72px;max-width:260px}
     .kfz-table td.status-ok{background:var(--success)!important}
@@ -95,7 +105,6 @@
     .kfz-table tr:nth-child(even) td:not(.row-tools):not([style*="--cellBg"]){background:color-mix(in srgb,var(--surface) 88%, var(--surface2))}
     .cell-inner{min-height:23px;display:flex;align-items:center;gap:5px}
     .cell-text{overflow:hidden;text-overflow:ellipsis;white-space:normal}
-    .cell-text.editing{background:var(--accent);outline:2px solid #e0b93c;border-radius:7px;padding:3px;min-width:70px}
     .cell-link{font-weight:800;text-decoration:underline;color:var(--primary)}
     .cell-img{max-width:76px;max-height:54px;border-radius:8px;object-fit:contain;border:1px solid var(--border);background:#fff}
     .cell-icons{margin-left:auto;display:flex;gap:3px;opacity:0}
@@ -137,20 +146,7 @@
 </head>
 <body>
 
-  <!-- Unsichtbare Login-Elemente für native Event-Verarbeitung von app.js -->
-  <div id="loginView" style="display:none!important;">
-    <div class="login-panel">
-      <div class="login-grid">
-        <input id="loginUser" value="Admin">
-        <input id="loginPass" type="password" value="admin">
-        <button id="loginBtn">Einloggen</button>
-      </div>
-      <div class="demo-users">
-        <button class="quick-login" data-user="admin">Admin</button>
-      </div>
-    </div>
-  </div>
-
+  <!-- Haupt-App direkt aktiv (kein Demo-Login mehr im Code) -->
   <div id="appView" class="app">
     <header class="topbar" id="top">
       <div class="topbar-row">
@@ -162,20 +158,23 @@
           </div>
         </div>
         <div class="top-actions">
-          <span class="version-chip">V26.07.26</span>
+          <span class="version-chip" id="versionChip" title="Klicken für Release Notes">V26.07.26</span>
           <span class="user-chip" id="userChip">kirchbergpa@gmail.com</span>
           <span class="version-chip" id="saveInfo"></span>
           <button id="darkToggle" class="secondary">🌙</button>
           <button id="saveBtn" class="secondary">Speichern</button>
-          <button id="logoutBtn" class="secondary" style="display:none;">Logout</button>
         </div>
       </div>
     </header>
     <nav class="tabs" id="tabs"></nav>
     <main id="main"></main>
-    <button class="release-float secondary" id="releaseBtn" style="display:none;">📝 Release Notes</button>
-    <div class="floating-gear" id="settingsGear" style="display:none;"><span class="gear-symbol">⚙</span></div>
-    <div class="demo-bar" id="demoBar" style="display:none!important;"></div>
+
+    <!-- Originale Funktionen: Release Notes & Appeinstellungen -->
+    <button class="release-float secondary" id="releaseBtn">📝 Release Notes</button>
+    <div class="floating-gear" id="settingsGear">
+      <span class="gear-symbol">⚙</span>
+      <span class="gear-label">Appeinstellungen</span>
+    </div>
   </div>
 
   <div id="modalRoot"></div>
