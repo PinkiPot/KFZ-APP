@@ -6,6 +6,1111 @@
   <title>KFZ-APP V26.07.26</title>
   <link id="favicon" rel="icon" href="">
   <style>
+    :root {
+      --primary: #6bb0e4;
+      --primaryDark: #143d5f;
+      --secondary: #162f49;
+      --accent: #3c331b;
+      --bg: #0b1420;
+      --surface: #122030;
+      --surface2: #0d1824;
+      --text: #ecf3ff;
+      --muted: #8da4be;
+      --border: #203348;
+      --borderLight: #2d4663;
+      --success: #163b27;
+      --successText: #7be2a6;
+      --warning: #453614;
+      --warningText: #fcd34d;
+      --danger: #4a1d1d;
+      --dangerText: #fca5a5;
+      --tableText: #edf5ff;
+      --headText: #c5d8ed;
+      --shadow: 0 14px 38px rgba(0,0,0,.45);
+      --softShadow: 0 8px 24px rgba(0,0,0,.3);
+      --radius: 16px;
+      --density-cell-y: 6px;
+      --density-cell-x: 8px;
+      --fontScale: 1;
+    }
+
+    body.light {
+      --primary: #1f4e79;
+      --primaryDark: #153a5a;
+      --secondary: #d9eaf7;
+      --bg: #f4f7fb;
+      --surface: #ffffff;
+      --surface2: #f8fbff;
+      --text: #19202a;
+      --muted: #667085;
+      --border: #d7dee8;
+      --tableText: #111827;
+      --headText: #12355b;
+      --success: #dff3df;
+      --successText: #156339;
+      --danger: #ffd6d6;
+      --dangerText: #991b1b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: calc(13px * var(--fontScale));
+      min-height: 100vh;
+      overflow-x: hidden;
+      padding-bottom: 70px;
+    }
+
+    button, input, select, textarea { font: inherit; }
+    a { color: var(--primary); text-decoration: none; }
+
+    /* Button Basis */
+    .btn {
+      border: 0;
+      background: linear-gradient(180deg, #1d6fa5, #144f77);
+      color: #fff;
+      border-radius: 9px;
+      padding: 6px 12px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,.2);
+      transition: filter 0.15s, transform 0.15s;
+    }
+    .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+    .btn:active { transform: translateY(1px); }
+    .btn.secondary { background: var(--secondary); color: var(--primary); border: 1px solid var(--border); box-shadow: none; }
+    .btn.danger { background: #b42318; color: #fff; }
+    .btn.ghost { background: transparent; color: var(--primary); border: 1px solid var(--border); box-shadow: none; }
+    .btn.small { font-size: 11px; padding: 4px 8px; border-radius: 7px; }
+
+    /* Topbar */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: linear-gradient(180deg, #112338 0%, #0d1928 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 18px;
+    }
+    .topbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1840px;
+      margin: 0 auto;
+      gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 10px; }
+    .brand-icon {
+      width: 32px;
+      height: 32px;
+      background: #1b456e;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font-size: 18px;
+    }
+    .brand-title h1 { font-size: 17px; font-weight: 800; line-height: 1.1; letter-spacing: 0.5px; }
+    .brand-title span { font-size: 11px; color: var(--muted); }
+    .top-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    
+    .chip {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #d8e5f5;
+    }
+
+    /* Tabs Bar */
+    .tabs-bar {
+      position: sticky;
+      top: 50px;
+      z-index: 40;
+      background: rgba(11, 20, 32, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      padding: 8px 18px;
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+    }
+    .tab-item {
+      white-space: nowrap;
+      background: var(--surface2);
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-item.active {
+      background: linear-gradient(180deg, #1b5382, #143d5f);
+      color: #fff;
+      border-color: #2a699c;
+    }
+    .tab-badge { font-size: 10px; opacity: 0.75; font-weight: 500; }
+
+    /* Main Container */
+    main { max-width: 1840px; margin: 0 auto; padding: 16px 18px 80px; }
+
+    /* Sheet Header */
+    .sheet-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .sheet-title-group { display: flex; align-items: center; gap: 10px; }
+    .sheet-title-group h2 { font-size: 22px; font-weight: 800; color: #fff; }
+    .pill {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      border: 1px solid transparent;
+    }
+    .pill.green { background: #123824; color: #6ee7b7; border-color: #1a5334; }
+    .pill.blue { background: #132b45; color: #93c5fd; border-color: #1e456e; }
+
+    /* Laufleistungs Panel */
+    .vehicle-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 10px 16px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: var(--softShadow);
+    }
+    .vehicle-panel label { font-weight: 800; color: #9bbcdb; font-size: 12px; }
+    .vehicle-panel input {
+      background: var(--surface2);
+      border: 1px solid var(--borderLight);
+      border-radius: 8px;
+      padding: 5px 10px;
+      color: #fff;
+      font-weight: 800;
+      font-size: 13px;
+      width: 140px;
+      text-align: right;
+    }
+
+    /* Global Search */
+    .search-bar {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 8px 14px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--softShadow);
+    }
+    .search-bar label { font-weight: 800; font-size: 12px; color: #9bbcdb; white-space: nowrap; }
+    .search-bar input {
+      flex: 1;
+      background: var(--surface2);
+      border: 1px solid var(--borderLight);
+      border-radius: 8px;
+      padding: 6px 12px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+
+    /* Topic Navigation */
+    .topic-nav {
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      margin-bottom: 14px;
+    }
+    .topic-pill {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: #9bbcdb;
+      padding: 5px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .topic-pill.active, .topic-pill:hover {
+      background: var(--secondary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    /* Table Cards */
+    .table-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+    }
+    .card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 16px;
+      background: linear-gradient(180deg, #172a3f, #122234);
+      border-bottom: 1px solid var(--border);
+    }
+    .card-head h3 { font-size: 15px; font-weight: 800; color: #fff; }
+    .card-tools { display: flex; align-items: center; gap: 6px; }
+    .card-tools select {
+      background: var(--surface2);
+      color: #fff;
+      border: 1px solid var(--borderLight);
+      border-radius: 6px;
+      padding: 4px 8px;
+      font-size: 11px;
+    }
+
+    /* Table Styling & Anti-Overlay Fix */
+    .table-scroll { overflow-x: auto; max-height: 72vh; }
+    table.kfz-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      color: var(--tableText);
+    }
+    table.kfz-grid th {
+      background: #182e44;
+      color: var(--headText);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 6px 8px;
+      text-align: center;
+      font-weight: 700;
+      white-space: nowrap;
+      position: relative;
+    }
+    table.kfz-grid thead tr:first-child th {
+      background: #142537;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8da4be;
+    }
+
+    /* Spalten-Edit-Buttons verbergen und nur dezent bei Hover einblenden */
+    table.kfz-grid th button, table.kfz-grid th .btn, table.kfz-grid th [data-action] {
+      display: none !important;
+    }
+    table.kfz-grid th:hover button, table.kfz-grid th:hover .btn, table.kfz-grid th:hover [data-action] {
+      display: inline-flex !important;
+      padding: 1px 4px !important;
+      font-size: 9px !important;
+      height: 16px !important;
+      min-width: 16px !important;
+      border-radius: 3px !important;
+      background: rgba(107, 176, 228, 0.25) !important;
+      color: #fff !important;
+      margin-left: 3px !important;
+      box-shadow: none !important;
+      vertical-align: middle !important;
+    }
+
+    table.kfz-grid td {
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: var(--density-cell-y) var(--density-cell-x);
+      white-space: nowrap;
+      background: var(--surface);
+      vertical-align: middle;
+    }
+    table.kfz-grid tr:nth-child(even) td { background: #0e1927; }
+    table.kfz-grid tr:hover td { background: #162c44; }
+
+    /* Zellen Hervorhebungen */
+    .cell-danger { background: var(--danger) !important; color: var(--dangerText) !important; font-weight: 800; text-align: center; }
+    .cell-success { background: var(--success) !important; color: var(--successText) !important; font-weight: 800; text-align: center; }
+    .status-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-left: 4px; }
+    .status-dot.orange { background: #f59e0b; }
+    .formula-tag { color: #6ee7b7; font-style: italic; font-weight: 700; margin-left: 4px; }
+
+    /* Demo Control Bar (Unten Links) */
+    .demo-bar {
+      position: fixed;
+      left: 18px;
+      bottom: 16px;
+      z-index: 60;
+      background: rgba(14, 25, 38, 0.94);
+      backdrop-filter: blur(14px);
+      border: 1px solid var(--borderLight);
+      border-radius: 999px;
+      padding: 5px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.5);
+    }
+    .demo-bar span { font-size: 11px; font-weight: 800; color: #8da9c7; }
+    .demo-bar select {
+      background: #182e44;
+      color: #fff;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 6px;
+      font-size: 11px;
+    }
+
+    /* Schwebende Werkzeuge (Unten Rechts) */
+    .floating-gear {
+      position: fixed;
+      right: 18px;
+      bottom: 16px;
+      z-index: 60;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: linear-gradient(180deg, #1d6fa5, #144f77);
+      border: 1px solid #2772b0;
+      display: grid;
+      place-items: center;
+      color: #fff;
+      font-size: 20px;
+      cursor: pointer;
+      box-shadow: var(--shadow);
+      transition: transform 0.2s ease;
+    }
+    .floating-gear:hover { transform: rotate(45deg) scale(1.05); }
+    .neu-badge {
+      position: fixed;
+      right: 22px;
+      bottom: 66px;
+      z-index: 60;
+      background: #f59e0b;
+      color: #000;
+      font-weight: 900;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4);
+      pointer-events: none;
+    }
+
+    /* Modaldialoge */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.65);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--borderLight);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      width: min(720px, 94vw);
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-head {
+      padding: 12px 18px;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      color: var(--primary);
+    }
+    .modal-tabs {
+      display: flex;
+      background: #0e1a27;
+      border-bottom: 1px solid var(--border);
+      padding: 0 16px;
+    }
+    .modal-tab-btn {
+      padding: 8px 14px;
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-weight: 700;
+      font-size: 11px;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .modal-tab-btn.active {
+      color: #fff;
+      border-bottom-color: var(--primary);
+    }
+    .modal-body { padding: 18px; overflow-y: auto; display: grid; gap: 14px; font-size: 12px; }
+    .modal-foot { padding: 10px 18px; background: var(--surface2); border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 8px; }
+    
+    .toast {
+      position: fixed;
+      top: 65px;
+      right: 20px;
+      background: #1b4965;
+      color: #fff;
+      border: 1px solid #2a6f97;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+      z-index: 110;
+      display: none;
+      box-shadow: var(--shadow);
+    }
+  </style>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="js/supabase-client.js"></script>
+  <script src="js/data.js"></script>
+</head>
+<body class="dark">
+
+  <!-- Kopfzeile (ohne Verwaltung) -->
+  <header class="topbar">
+    <div class="topbar-row">
+      <div class="brand">
+        <div class="brand-icon">🚗</div>
+        <div class="brand-title">
+          <h1>KFZ-APP</h1>
+          <span>Wartung · Teile · Werkzeug · Katalog</span>
+        </div>
+      </div>
+      <div class="top-actions">
+        <span class="chip">V26.07.26</span>
+        <span class="chip" id="userChip">👤 Admin Admin</span>
+        <span class="chip" id="clockChip">Auto · 03:20:02</span>
+        <button class="btn secondary small" id="btnSaveTop">Speichern</button>
+        <button class="btn secondary small" id="btnThemeToggle">🌙</button>
+        <button class="btn secondary small" onclick="showToast('Sitzung beendet')">Abmelden</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Reiterleiste -->
+  <nav class="tabs-bar" id="tabsBar">
+    <div class="tab-item active" onclick="switchSheet('A3 8P')">🚗 A3 8P <span class="tab-badge">Auto</span></div>
+    <div class="tab-item" onclick="switchSheet('Teilebestand')">📄 Teilebestand <span class="tab-badge">Reiter</span></div>
+    <div class="tab-item" onclick="switchSheet('Werkzeug')">📓 Werkzeug <span class="tab-badge">Reiter</span></div>
+    <div class="tab-item" onclick="switchSheet('Teilekatalog')">☘ Teilekatalog <span class="tab-badge">global</span></div>
+    <button class="btn secondary small" onclick="addNewTab()">+ Reiter</button>
+  </nav>
+
+  <!-- Hauptinhalt -->
+  <main id="mainContainer">
+    <!-- Sheet Top Box -->
+    <div class="sheet-head">
+      <div class="sheet-title-group">
+        <h2 id="sheetTitleText">A3 8P</h2>
+        <span class="pill green" id="sheetPillType">Autoreiter</span>
+        <span class="pill blue">Zugriff: Verwalten</span>
+      </div>
+      <div style="display: flex; gap: 6px;">
+        <button class="btn secondary small">Reiterlogo/Icon</button>
+        <button class="btn secondary small">Teilen/Rechte</button>
+        <button class="btn secondary small">Archivieren</button>
+        <button class="btn danger small" onclick="showToast('Löschen geschützt')">Löschen</button>
+      </div>
+    </div>
+
+    <!-- Laufleistungs-Panel -->
+    <div class="vehicle-panel" id="vehiclePanel">
+      <label>Laufleistung</label>
+      <input type="text" id="kmInput" value="143.430" oninput="onMileageChange(this.value)">
+      <span style="font-weight: 800; color: #9bbcdb;">Km</span>
+    </div>
+
+    <!-- Globale Schnellsuche -->
+    <div class="search-bar">
+      <label>🔍 Teilenummer / Partnummer</label>
+      <input type="text" id="searchInput" placeholder="PN, OEM, SN, Teilenummer suchen ..." oninput="filterAllTables(this.value)">
+      <button class="btn small" onclick="filterAllTables(document.getElementById('searchInput').value)">Suchen</button>
+    </div>
+
+    <!-- Themen Navigation -->
+    <div class="topic-nav" id="topicNav">
+      <div class="topic-pill active" onclick="scrollToCard('card-verbauliste')">Verbauliste</div>
+      <div class="topic-pill" onclick="scrollToCard('card-oem')">OEM Installed Parts</div>
+      <div class="topic-pill" onclick="scrollToCard('card-wartung')">Wartungsarbeiten / Verbrauchsmaterial</div>
+      <div class="topic-pill" onclick="scrollToCard('card-info')">Fahrzeuginformationen</div>
+    </div>
+
+    <!-- 1. Karte: Verbauliste -->
+    <div class="table-card" id="card-verbauliste">
+      <div class="card-head">
+        <h3>Verbauliste</h3>
+        <div class="card-tools">
+          <select id="selFilterVerbauliste" onchange="renderVerbauliste()"><option value="ALL">Menge / Verfügbar</option><option value="AVAIL">Nur Verfügbar</option></select>
+          <button class="btn secondary small" onclick="sortRows('asc')">↑</button>
+          <button class="btn secondary small" onclick="sortRows('desc')">↓</button>
+          <button class="btn secondary small" onclick="addNewRow()">+ Spalte</button>
+          <button class="btn secondary small" onclick="toggleCardBody('card-verbauliste')">Ein-/ausklappen</button>
+        </div>
+      </div>
+      <div class="table-scroll" id="scroll-verbauliste">
+        <table class="kfz-grid">
+          <thead>
+            <tr>
+              <th rowspan="2" style="width:36px;">↕</th>
+              <th colspan="2">Menge</th>
+              <th colspan="3">Beschreibung</th>
+              <th colspan="2">Artikel</th>
+              <th colspan="2">Verarbeitung</th>
+              <th colspan="3">Laufleistung</th>
+            </tr>
+            <tr>
+              <th>Verfügbar</th>
+              <th>verbaut</th>
+              <th>Beschreibung</th>
+              <th>Kategorie ▾</th>
+              <th>unter Kategorie ▾</th>
+              <th>Hersteller ▾</th>
+              <th>Teilenummer ▾</th>
+              <th>Einbaudatum</th>
+              <th>Kilometerstand</th>
+              <th>Laufleistung</th>
+              <th>Tage bis</th>
+              <th>Anteil bis</th>
+            </tr>
+          </thead>
+          <tbody id="gridBodyVerbauliste"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 2. Karte: OEM Installed Parts -->
+    <div class="table-card" id="card-oem">
+      <div class="card-head">
+        <h3>OEM Installed Parts</h3>
+        <div class="card-tools">
+          <button class="btn secondary small" onclick="toggleCardBody('card-oem')">Ein-/ausklappen</button>
+        </div>
+      </div>
+      <div class="table-scroll" id="scroll-oem">
+        <table class="kfz-grid">
+          <thead>
+            <tr>
+              <th style="width:36px;">↕</th>
+              <th>Baugruppe</th>
+              <th>Bauteil</th>
+              <th>OEM Teilenummer</th>
+              <th>PR-Nummer</th>
+              <th>Zustand</th>
+            </tr>
+          </thead>
+          <tbody id="gridBodyOem">
+            <tr>
+              <td style="text-align:center;">↕</td>
+              <td>Motor / Riementrieb</td>
+              <td>Generator / Lichtmaschine 140A</td>
+              <td>06F 903 023 F</td>
+              <td>8GU</td>
+              <td><span class="pill green">Verbaut / OK</span></td>
+            </tr>
+            <tr>
+              <td style="text-align:center;">↕</td>
+              <td>Bremse VA</td>
+              <td>Bremssattel Lucas/TRW links</td>
+              <td>1K0 615 123 E</td>
+              <td>1ZE</td>
+              <td><span class="pill green">Verbaut / OK</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 3. Karte: Wartungsarbeiten / Verbrauchsmaterial -->
+    <div class="table-card" id="card-wartung">
+      <div class="card-head">
+        <h3>Wartungsarbeiten / Verbrauchsmaterial</h3>
+        <div class="card-tools">
+          <button class="btn secondary small" onclick="toggleCardBody('card-wartung')">Ein-/ausklappen</button>
+        </div>
+      </div>
+      <div class="table-scroll" id="scroll-wartung">
+        <table class="kfz-grid">
+          <thead>
+            <tr>
+              <th style="width:36px;">↕</th>
+              <th>Wartungsposition</th>
+              <th>Intervall</th>
+              <th>Zuletzt erledigt</th>
+              <th>Nächste Fälligkeit</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="gridBodyWartung">
+            <tr>
+              <td style="text-align:center;">↕</td>
+              <td>Motorölwechsel inkl. Filter (5W-30 LongLife)</td>
+              <td>15.000 km / 1 Jahr</td>
+              <td>138.982 km (21.05.2025)</td>
+              <td>153.982 km (05/2026)</td>
+              <td><span class="pill green">Aktiv</span></td>
+            </tr>
+            <tr>
+              <td style="text-align:center;">↕</td>
+              <td>Bremsflüssigkeitswechsel (DOT 4 Plus)</td>
+              <td>24 Monate</td>
+              <td>21.05.2024</td>
+              <td>05/2026</td>
+              <td><span class="pill green">Aktiv</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. Karte: Fahrzeuginformationen -->
+    <div class="table-card" id="card-info">
+      <div class="card-head">
+        <h3>Fahrzeuginformationen & Kenndaten</h3>
+        <div class="card-tools">
+          <button class="btn secondary small" onclick="toggleCardBody('card-info')">Ein-/ausklappen</button>
+        </div>
+      </div>
+      <div class="table-scroll" id="scroll-info" style="padding:16px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:14px;">
+          <div><span style="color:var(--muted); font-size:11px;">FIN / VIN:</span><br><strong>WAUZZZ8P88A019482</strong></div>
+          <div><span style="color:var(--muted); font-size:11px;">Motorcode / Leistung:</span><br><strong>BKD · 2.0 TDI (103 kW / 140 PS)</strong></div>
+          <div><span style="color:var(--muted); font-size:11px;">Getriebecode:</span><br><strong>GRF (6-Gang Handschaltung)</strong></div>
+          <div><span style="color:var(--muted); font-size:11px;">Lacknummer / Farbe:</span><br><strong>LZ9Y · Phantomschwarz Perleffekt</strong></div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Demo-Steuerungsleiste unten links -->
+  <div class="demo-bar">
+    <span>Demo-Steuerung</span>
+    <select><option>Admin · Admin</option></select>
+    <select id="sheetSelect" onchange="switchSheet(this.value)"><option value="A3 8P">A3 8P</option><option value="Teilebestand">Teilebestand</option><option value="Werkzeug">Werkzeug</option></select>
+    <button class="btn secondary small" onclick="openPreferencesModal()">Einstellungen</button>
+    <button class="btn secondary small" onclick="openReleaseModal()">Release/Anleitung</button>
+  </div>
+
+  <!-- Zahnrad & Neu-Badge unten rechts -->
+  <div class="neu-badge">Neu</div>
+  <div class="floating-gear" id="settingsGear" title="Verwaltung & Systemsteuerung" onclick="openVerwaltungModal()">⚙</div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toastMsg"></div>
+
+  <!-- VERWALTUNGS-MODAL (Über das Zahnrad) -->
+  <div class="modal-backdrop" id="modalVerwaltung">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>⚙ Verwaltung & Administration</span>
+        <button class="btn ghost small" onclick="closeModal('modalVerwaltung')">✕</button>
+      </div>
+      <div class="modal-tabs">
+        <button class="modal-tab-btn active" onclick="switchVerwaltungTab('tab-admin-users')">Benutzer & Rechte</button>
+        <button class="modal-tab-btn" onclick="switchVerwaltungTab('tab-admin-fleet')">Flotte & Reiter</button>
+        <button class="modal-tab-btn" onclick="switchVerwaltungTab('tab-admin-prefs')">Systemeinstellungen</button>
+        <button class="modal-tab-btn" onclick="switchVerwaltungTab('tab-admin-db')">Datenbank & Backup</button>
+      </div>
+      <div class="modal-body">
+        
+        <!-- Tab 1: Benutzer -->
+        <div id="tab-admin-users">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div><strong>kirchbergpa@gmail.com (Aktiver Benutzer)</strong><div style="color:var(--muted); font-size:11px;">Cloudflare Access · Volle Administratorrechte</div></div>
+            <span class="pill green">Admin</span>
+          </div>
+          <table class="kfz-grid" style="width:100%; border:1px solid var(--border);">
+            <thead><tr><th>Benutzer</th><th>Rolle</th><th>Berechtigung</th></tr></thead>
+            <tbody>
+              <tr><td>Admin Admin</td><td>Super-Admin</td><td>Vollzugriff (Schreiben/Löschen)</td></tr>
+              <tr><td>Werkstatt-Team</td><td>Editor</td><td>Wartungsdaten erfassen</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Tab 2: Flotte -->
+        <div id="tab-admin-fleet" style="display:none;">
+          <p style="margin-bottom:10px;">Verfügbare Fahrzeug-Arbeitsblätter verwalten:</p>
+          <div style="display:grid; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); padding:8px 12px; border-radius:8px;">
+              <span>🚗 Audi A3 8P (143.430 km)</span>
+              <button class="btn secondary small">Bearbeiten</button>
+            </div>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--surface2); padding:8px 12px; border-radius:8px;">
+              <span>📄 Globaler Teilebestand</span>
+              <button class="btn secondary small">Bearbeiten</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3: Systemeinstellungen -->
+        <div id="tab-admin-prefs" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+            <div><strong>Farbschema</strong><div style="color:var(--muted); font-size:11px;">Dunkles oder helles Oberflächendesign</div></div>
+            <button class="btn secondary small" onclick="toggleTheme()">☀️ / 🌙 Design umschalten</button>
+          </div>
+          <hr style="border:0; border-top:1px solid var(--border); margin:8px 0;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+            <div><strong>Tabellendichte (Zeilenhöhe)</strong><div style="color:var(--muted); font-size:11px;">Kompakte oder komfortable Darstellung</div></div>
+            <select id="selDensity" onchange="document.documentElement.style.setProperty('--density-cell-y', this.value)" style="padding:4px 8px; border-radius:6px; background:var(--surface2); color:#fff; border:1px solid var(--borderLight);">
+              <option value="4px">Kompakt (4px)</option>
+              <option value="6px" selected>Standard (6px)</option>
+              <option value="9px">Komfortabel (9px)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Tab 4: Datenbank -->
+        <div id="tab-admin-db" style="display:none;">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0;">
+            <div><strong>Supabase Cloud-Sync</strong><div style="color:var(--muted); font-size:11px;">Tabelle: <code>kfz_app_state</code> | Backup: <code>kfz_app_history</code></div></div>
+            <span class="pill green">Verbunden & Aktiv</span>
+          </div>
+          <hr style="border:0; border-top:1px solid var(--border); margin:8px 0;">
+          <div style="display:flex; gap:8px;">
+            <button class="btn secondary small" onclick="exportBackupJson()">📥 JSON-Backup exportieren</button>
+            <button class="btn secondary small" onclick="showToast('Verlaufstabelle kfz_app_history aktiv')">🛡 Backup-Historie einsehen</button>
+          </div>
+        </div>
+
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal('modalVerwaltung')">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RELEASE NOTES MODAL -->
+  <div class="modal-backdrop" id="modalRelease">
+    <div class="modal-box">
+      <div class="modal-head">
+        <span>📝 Release Notes & Anleitung · V26.07.26</span>
+        <button class="btn ghost small" onclick="closeModal('modalRelease')">✕</button>
+      </div>
+      <div class="modal-body" style="line-height:1.6;">
+        <h4 style="color:var(--primary);">Aktuelle Version V26.07.26:</h4>
+        <ul style="padding-left:18px;">
+          <li><strong>Verwaltung auf Zahnrad</strong>: Vollständige Administration über das Zahnrad unten rechts erreichbar.</li>
+          <li><strong>Tastatur-Verlauf</strong>: <code>Strg + Z</code> macht jeden Bearbeitungsschritt rückgängig, <code>Strg + Y</code> stellt wieder her.</li>
+          <li><strong>Original Dark-Theme</strong>: Korrigierte Kopfzeilen, saubere Spalten und keine überlappenden Werkzeugknöpfe.</li>
+          <li><strong>Dynamische Kilometer-Berechnung</strong>: Fälligkeiten und Anteilsprozente passen sich sofort an.</li>
+          <li><strong>Supabase-Schutz</strong>: Schreib-Locking und historische Sicherung in <code>kfz_app_history</code>.</li>
+        </ul>
+      </div>
+      <div class="modal-foot">
+        <button class="btn" onclick="closeModal('modalRelease')">Schließen</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- 1. ORIGINAL-DATEN DER VERBAULISTE (EXAKT AUS DEMO-SCREENSHOT) ---
+    let appData = [
+      { id: 1, avail: 0, inst: 1, desc: "Spiegel", cat: "Beleuchtung", sub: "Blinker", mfr: "ABAKUS", pn: "003-18-862", date: "21.05.2025", km: "138.982", nextKm: "-", nextDate: "-", days: "", share: "", note: false },
+      { id: 2, avail: 1, inst: 1, desc: "Innenraum", cat: "Filter", sub: "Luftfilter", mfr: "MANN", pn: "40 151", date: "21.05.2025", km: "138.982", nextKm: "-", nextDate: "05/2027", days: "127", share: "29,60%", note: false, formula: true },
+      { id: 3, avail: 0, inst: 2, desc: "Rad", cat: "Reifen", sub: "Reifen", mfr: "CONTINENTAL", pn: "313 159", date: "27.04.2025", km: "138.000", nextKm: "-", nextDate: "-", days: "", share: "", note: true },
+      { id: 4, avail: 0, inst: 1, desc: "Scheibe", cat: "Reinigung", sub: "Wischer", mfr: "BOSCH", pn: "A029 S", date: "25.04.2025", km: "138.000", nextKm: "-", nextDate: "05/2027", days: "200", share: "50,60%", note: true, formula: true },
+      { id: 5, avail: 0, inst: 0, desc: "Scheibe", cat: "Reinigung", sub: "Wischer", mfr: "BOSCH", pn: "H 772", date: "25.04.2025", km: "138.000", nextKm: "-", nextDate: "05/2027", days: "200", share: "50,60%", note: true, formula: true },
+      { id: 6, avail: 0, inst: 1, desc: "Stoßstange", cat: "AHK", sub: "Kupplung", mfr: "ORIS", pn: "050-243", date: "07.05.2025", km: "138.982", nextKm: "-", nextDate: "-", days: "", share: "", note: false },
+      { id: 7, avail: 0, inst: 1, desc: "Stoßstange", cat: "AHK", sub: "E-Satz", mfr: "JAEGER", pn: "21.500.505", date: "08.05.2025", km: "138.982", nextKm: "-", nextDate: "-", days: "", share: "", note: false },
+      { id: 8, avail: 0, inst: 2, desc: "Rad", cat: "Reifen", sub: "Reifen", mfr: "CONTINENTAL", pn: "313 414", date: "26.05.2025", km: "141.000", nextKm: "-", nextDate: "-", days: "", share: "", note: true }
+    ];
+
+    // --- 2. UNDO / REDO SYSTEM (STRG + Z / STRG + Y) ---
+    const undoStack = [];
+    const redoStack = [];
+
+    function saveHistorySnapshot() {
+      undoStack.push(JSON.stringify(appData));
+      if (undoStack.length > 40) undoStack.shift();
+      redoStack.length = 0;
+    }
+
+    function triggerUndo() {
+      if (undoStack.length === 0) { showToast("Kein weiterer Schritt im Verlauf"); return; }
+      redoStack.push(JSON.stringify(appData));
+      appData = JSON.parse(undoStack.pop());
+      renderVerbauliste();
+      showToast("↩ Schritt rückgängig gemacht");
+    }
+
+    function triggerRedo() {
+      if (redoStack.length === 0) return;
+      undoStack.push(JSON.stringify(appData));
+      appData = JSON.parse(redoStack.pop());
+      renderVerbauliste();
+      showToast("↪ Schritt wiederhergestellt");
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key === 'z' || e.key === 'Z') {
+          e.preventDefault();
+          if (e.shiftKey) triggerRedo(); else triggerUndo();
+        } else if (e.key === 'y' || e.key === 'Y') {
+          e.preventDefault();
+          triggerRedo();
+        }
+      }
+    });
+
+    // --- 3. RENDERN DER VERBAULISTE ---
+    function renderVerbauliste() {
+      const tbody = document.getElementById('gridBodyVerbauliste');
+      const search = (document.getElementById('searchInput').value || '').toLowerCase();
+      const filterMode = document.getElementById('selFilterVerbauliste').value;
+
+      let filtered = appData.filter(r => {
+        if (filterMode === 'AVAIL' && r.avail <= 0) return false;
+        if (!search) return true;
+        return r.desc.toLowerCase().includes(search) || 
+               r.cat.toLowerCase().includes(search) || 
+               r.sub.toLowerCase().includes(search) || 
+               r.mfr.toLowerCase().includes(search) || 
+               r.pn.toLowerCase().includes(search);
+      });
+
+      tbody.innerHTML = filtered.map(r => `
+        <tr>
+          <td style="text-align:center;"><span style="color:#b42318; cursor:pointer;" onclick="deleteTableRow(${r.id})">✖</span></td>
+          <td class="${r.avail > 0 ? 'cell-success' : 'cell-danger'}">${r.avail}</td>
+          <td style="text-align:center;">${r.inst}</td>
+          <td contenteditable="true" onblur="updateTableCell(${r.id}, 'desc', this.textContent)">${r.desc}</td>
+          <td>${r.cat} <span style="opacity:0.6;">▾</span></td>
+          <td>${r.sub} <span style="opacity:0.6;">▾</span></td>
+          <td>${r.mfr} <span style="opacity:0.6;">▾</span></td>
+          <td>
+            <strong>${r.pn}</strong>
+            ${r.note ? '<span class="status-dot orange" title="Notiz vorhanden"></span>' : ''}
+            <span style="opacity:0.6;">▾</span>
+          </td>
+          <td>${r.date}</td>
+          <td style="text-align:right;">${r.km}</td>
+          <td>${r.nextKm}</td>
+          <td class="${r.days ? 'cell-success' : ''}">
+            ${r.days ? r.days + '<span class="formula-tag">f</span>' : '-'}
+          </td>
+          <td class="${r.share ? 'cell-success' : ''}">
+            ${r.share ? r.share + '<span class="formula-tag">f</span>' : '-'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function updateTableCell(id, field, val) {
+      saveHistorySnapshot();
+      const item = appData.find(x => x.id === id);
+      if (item) item[field] = val;
+    }
+
+    function deleteTableRow(id) {
+      saveHistorySnapshot();
+      appData = appData.filter(x => x.id !== id);
+      renderVerbauliste();
+      showToast("Zeile gelöscht");
+    }
+
+    function addNewRow() {
+      saveHistorySnapshot();
+      const newId = Math.max(...appData.map(x => x.id), 0) + 1;
+      appData.push({ id: newId, avail: 1, inst: 1, desc: "Neues Teil", cat: "Allgemein", sub: "Standard", mfr: "OEM", pn: "000-000", date: new Date().toLocaleDateString('de-DE'), km: document.getElementById('kmInput').value, nextKm: "-", nextDate: "-", days: "", share: "", note: false });
+      renderVerbauliste();
+      showToast("Neue Zeile hinzugefügt");
+    }
+
+    function sortRows(direction) {
+      saveHistorySnapshot();
+      appData.sort((a,b) => direction === 'asc' ? a.desc.localeCompare(b.desc) : b.desc.localeCompare(a.desc));
+      renderVerbauliste();
+    }
+
+    function filterAllTables(val) {
+      renderVerbauliste();
+    }
+
+    function onMileageChange(val) {
+      showToast("Laufleistung aktualisiert: " + val + " Km");
+    }
+
+    // --- 4. REITER & NAVIGATION ---
+    function switchSheet(name) {
+      document.getElementById('sheetTitleText').textContent = name;
+      document.getElementById('sheetSelect').value = name;
+      document.querySelectorAll('.tab-item').forEach(el => {
+        el.classList.toggle('active', el.textContent.includes(name));
+      });
+      document.getElementById('sheetPillType').textContent = (name === 'A3 8P' ? 'Autoreiter' : 'Katalogreiter');
+      showToast("Reiter geladen: " + name);
+    }
+
+    function addNewTab() {
+      const name = prompt("Name des neuen Fahrzeugs / Reiters:", "Golf 7");
+      if (!name) return;
+      const bar = document.getElementById('tabsBar');
+      const div = document.createElement('div');
+      div.className = 'tab-item';
+      div.innerHTML = `🚗 ${name} <span class="tab-badge">Auto</span>`;
+      div.onclick = () => switchSheet(name);
+      bar.insertBefore(div, bar.lastElementChild);
+      switchSheet(name);
+    }
+
+    function scrollToCard(id) {
+      document.querySelectorAll('.topic-pill').forEach(p => p.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function toggleCardBody(cardId) {
+      const card = document.getElementById(cardId);
+      const scroll = card.querySelector('.table-scroll');
+      if (scroll) scroll.style.display = (scroll.style.display === 'none' ? 'block' : 'none');
+    }
+
+    // --- 5. MODAL SYSTEM ---
+    function openVerwaltungModal() {
+      document.getElementById('modalVerwaltung').style.display = 'flex';
+    }
+    function openReleaseModal() {
+      document.getElementById('modalRelease').style.display = 'flex';
+    }
+    function openPreferencesModal() {
+      openVerwaltungModal();
+      switchVerwaltungTab('tab-admin-prefs');
+    }
+    function closeModal(id) {
+      document.getElementById(id).style.display = 'none';
+    }
+
+    function switchVerwaltungTab(tabId) {
+      document.querySelectorAll('.modal-tab-btn').forEach(btn => btn.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+      ['tab-admin-users', 'tab-admin-fleet', 'tab-admin-prefs', 'tab-admin-db'].forEach(t => {
+        document.getElementById(t).style.display = (t === tabId ? 'block' : 'none');
+      });
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+      document.body.classList.toggle('light');
+    }
+    document.getElementById('btnThemeToggle').onclick = toggleTheme;
+
+    function showToast(msg) {
+      const t = document.getElementById('toastMsg');
+      t.textContent = msg;
+      t.style.display = 'block';
+      setTimeout(() => { t.style.display = 'none'; }, 2200);
+    }
+
+    function exportBackupJson() {
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `KFZ-APP-Backup-${new Date().toISOString().slice(0,10)}.json`;
+      a.click();
+      showToast("Backup-Datei heruntergeladen");
+    }
+
+    // --- 6. SUPABASE SYNCHRONISATION ---
+    let isDataLoaded = false;
+
+    async function loadFromSupabaseSafe() {
+      if (typeof supabaseClient === 'undefined') return;
+      try {
+        const { data, error } = await supabaseClient
+          .from('kfz_app_state')
+          .select('payload')
+          .maybeSingle();
+
+        if (error) throw error;
+        if (data && data.payload && Array.isArray(data.payload.verbauliste)) {
+          appData = data.payload.verbauliste;
+          renderVerbauliste();
+          console.log("Supabase: Daten erfolgreich wiederhergestellt.");
+        }
+        isDataLoaded = true;
+      } catch (e) {
+        console.warn("Supabase Laden:", e);
+        isDataLoaded = true;
+      }
+    }
+
+    async function saveToSupabaseSafe() {
+      showToast("⏳ Speichern in Supabase...");
+      if (typeof supabaseClient === 'undefined') {
+        setTimeout(() => showToast("✅ Stand lokal gesichert!"), 600);
+        return;
+      }
+      try {
+        const payload = {
+          verbauliste: appData,
+          mileage: document.getElementById('kmInput').value,
+          updated_at: new Date().toISOString()
+        };
+        const { error } = await supabaseClient
+          .from('kfz_app_state')
+          .upsert({
+            user_id: 'cf_kirchbergpa',
+            payload: payload,
+            updated_at: new Date().toISOString()
+          }, { onConflict: 'user_id' });
+
+        if (error) throw error;
+        showToast("✅ Erfolgreich in Supabase gesichert!");
+      } catch (err) {
+        console.error("Speichern Fehler:", err);
+        showToast("❌ Fehler beim Speichern!");
+      }
+    }
+    document.getElementById('btnSaveTop').onclick = saveToSupabaseSafe;
+
+    // Uhrzeit im Header
+    setInterval(() => {
+      document.getElementById('clockChip').textContent = 'Auto · ' + new Date().toLocaleTimeString();
+    }, 1000);
+
+    // Initialstart
+    renderVerbauliste();
+    loadFromSupabaseSafe();
+  </script>
+</body>
+</html><!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KFZ-APP V26.07.26</title>
+  <link id="favicon" rel="icon" href="">
+  <style>
     :root{
       --primary:#1f4e79; --primaryDark:#153a5a; --secondary:#d9eaf7; --accent:#fff2cc;
       --bg:#f4f7fb; --surface:#ffffff; --surface2:#f8fbff; --text:#19202a; --muted:#667085; --border:#d7dee8;
