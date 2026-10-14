@@ -7,6 +7,97 @@
   <link id="favicon" rel="icon" href="">
   <link rel="stylesheet" href="css/style.css">
   <style>
+    /* Demo-Overlay ausblenden, DOM-Elemente für app.js intakt lassen */
+    #loginView, .login-panel, #demoBar, .demo-bar, .demo-users { display: none !important; }
+
+    /* Spaltenkopf-Werkzeuge dezent halten, damit Text lesbar bleibt */
+    .kfz-table th { position: relative; }
+    .kfz-table th button, .kfz-table th .btn-icon, .kfz-table th [data-action] {
+      opacity: 0.25;
+      transition: opacity 0.2s ease;
+      vertical-align: middle;
+    }
+    .kfz-table th:hover button, .kfz-table th:hover .btn-icon, .kfz-table th:hover [data-action] {
+      opacity: 1;
+    }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Versteckte Demo-Login-Container für interne app.js Listener -->
+  <div id="loginView" class="login-panel">
+    <div class="login-grid">
+      <input id="loginUser" value="admin">
+      <input id="loginPass" type="password" value="admin">
+      <button id="loginBtn">Einloggen</button>
+    </div>
+    <div class="demo-users">
+      <button class="quick-login" data-user="admin">Admin</button>
+      <button class="quick-login" data-user="max">Max</button>
+      <button class="quick-login" data-user="lea">Lea</button>
+      <button class="quick-login" data-user="gast">Gast</button>
+    </div>
+    <div class="login-grid">
+      <input id="regName">
+      <input id="regEmail">
+      <input id="regPass" type="password">
+      <button id="registerBtn">Registrieren</button>
+    </div>
+  </div>
+
+  <!-- Originale App-Struktur -->
+  <div id="appView" class="app">
+    <header class="topbar" id="top">
+      <div class="topbar-row">
+        <div class="brand">
+          <img id="appLogo" alt="Logo">
+          <div class="brand-title">
+            <h1>KFZ-APP</h1>
+            <span>Wartung · Teile · Werkzeug · Katalog</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="user-chip" id="userChip">kirchbergpa@gmail.com</span>
+          <span class="version-chip" id="saveInfo"></span>
+          <button id="saveBtn" class="secondary">Speichern</button>
+          <!-- Unsichtbare Referenzen für app.js -->
+          <button id="darkToggle" style="display:none;"></button>
+          <button id="logoutBtn" style="display:none;"></button>
+          <span class="version-chip" id="versionChip" style="display:none;">V26.07.26</span>
+        </div>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs"></nav>
+    <main id="main"></main>
+
+    <!-- Original Schwebewerkzeuge -->
+    <button class="release-float secondary" id="releaseBtn" style="display:none;">📝 Release Notes</button>
+    <div class="floating-gear" id="settingsGear">
+      <span class="gear-symbol">⚙</span>
+      <span class="gear-label">Appeinstellungen</span>
+    </div>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- Skripte -->
+  <script src="js/supabase-client.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/patch-v26.js"></script>
+</body>
+</html><!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KFZ-APP V26.07.26</title>
+  <link id="favicon" rel="icon" href="">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
     /* Demo-Login-Container unsichtbar halten, damit app.js ihn im Hintergrund ausführen kann */
     #loginView, .login-panel, #demoBar, .demo-bar { display: none !important; }
     
