@@ -1,4 +1,91 @@
 // ==========================================
+// KFZ-APP PATCH & AUTO-AUTH (CLOUDFLARE + SUPABASE)
+// ==========================================
+
+(function() {
+  // 1. Demo-Elemente per CSS unsichtbar schalten
+  const style = document.createElement('style');
+  style.innerHTML = `
+    .login-panel, .demo-bar, .demo-users { display: none !important; }
+  `;
+  document.head.appendChild(style);
+
+  // 2. Cloudflare Access Identität abrufen & Supabase laden
+  async function initCloudflareAuth() {
+    let email = "kirchbergpa@gmail.com";
+
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const identity = await res.json();
+        if (identity && identity.email) {
+          email = identity.email;
+        }
+      }
+    } catch (e) {
+      console.log("Cloudflare Access lokal oder Fallback:", e);
+    }
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // App-Status sofort auf eingeloggt setzen
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    // Nutzeranzeige im Header anpassen
+    const userDisplay = document.querySelector('.user-chip') || document.getElementById('user-display');
+    if (userDisplay) {
+      userDisplay.textContent = email;
+    }
+
+    // Echte Daten aus Supabase synchronisieren
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          console.log("Supabase-Daten erfolgreich geladen für:", email);
+          if (typeof renderApp === 'function') renderApp();
+          else if (typeof renderAll === 'function') renderAll();
+        }
+      } catch (err) {
+        console.error("Fehler beim Abrufen aus Supabase:", err);
+      }
+    }
+  }
+
+  // 3. Speichern-Funktion absichern
+  function setupSaveHandler() {
+    const saveBtn = document.getElementById('save-btn') || document.querySelector('button[onclick*="save"]');
+    if (saveBtn) {
+      saveBtn.addEventListener('click', async function() {
+        if (typeof saveToSupabase === 'function' && window.state) {
+          try {
+            await saveToSupabase(window.state);
+            console.log("Erfolgreich in Supabase gesichert.");
+          } catch (e) {
+            console.error("Fehler beim Speichern:", e);
+          }
+        }
+      });
+    }
+  }
+
+  // Automatischer Start
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+      initCloudflareAuth();
+      setupSaveHandler();
+    });
+  } else {
+    initCloudflareAuth();
+    setupSaveHandler();
+  }
+})();// ==========================================
 // KFZ-APP PATCH-MODUL & CLOUDFLARE AUTH (WEG A)
 // ==========================================
 
