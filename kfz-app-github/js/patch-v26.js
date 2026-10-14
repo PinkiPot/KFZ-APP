@@ -1,4 +1,129 @@
 // =========================================================================
+// KFZ-APP PATCH-V26: NATIVE VOLLVERSION OHNE DEMO-MODUS
+// =========================================================================
+
+(function() {
+  async function bootAppDirectly() {
+    // 1. Echte Identität aus Cloudflare Access laden
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {}
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // 2. Den Anwendungsstatus direkt als authentifizierter Admin initialisieren
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    const userChip = document.getElementById('userChip');
+    if (userChip) userChip.textContent = email;
+
+    // 3. Echte Daten aus Supabase synchronisieren
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+        }
+      } catch (err) {
+        console.error("Supabase Sync:", err);
+      }
+    }
+
+    // 4. Erstes Arbeitsblatt als aktiv setzen
+    if (window.state) {
+      const sheets = window.state.sheets || (window.WORKBOOK_DATA && window.WORKBOOK_DATA.sheets);
+      if (sheets && sheets.length > 0 && !window.state.activeSheetId) {
+        window.state.activeSheetId = sheets[0].id || sheets[0].name;
+      }
+    }
+
+    // 5. App und Reiter vollständig zeichnen
+    if (typeof renderTabs === 'function') renderTabs();
+    if (typeof renderApp === 'function') {
+      renderApp();
+    } else if (typeof renderAll === 'function') {
+      renderAll();
+    } else if (typeof renderCurrentSheet === 'function') {
+      renderCurrentSheet();
+    } else if (typeof renderSheet === 'function' && window.state) {
+      renderSheet(window.state.activeSheetId);
+    }
+
+    // 6. Den aktiven Tab ansteuern
+    setTimeout(() => {
+      const firstTab = document.querySelector('#tabs .tab, .tabs .tab');
+      if (firstTab) {
+        firstTab.classList.add('active');
+        firstTab.click();
+      }
+    }, 100);
+
+    // 7. Appeinstellungen-Modal öffnen
+    const settingsGear = document.getElementById('settingsGear');
+    if (settingsGear) {
+      settingsGear.onclick = function() {
+        if (typeof openSettingsModal === 'function') openSettingsModal();
+        else if (typeof openSettings === 'function') openSettings();
+        else if (typeof showSettings === 'function') showSettings();
+      };
+    }
+
+    // 8. Release Notes & Versionsinfo öffnen
+    const releaseBtn = document.getElementById('releaseBtn');
+    const versionChip = document.getElementById('versionChip');
+    const triggerRelease = function() {
+      if (typeof openReleaseModal === 'function') openReleaseModal();
+      else if (typeof openReleaseNotes === 'function') openReleaseNotes();
+      else if (typeof showReleaseNotes === 'function') showReleaseNotes();
+    };
+    if (releaseBtn) releaseBtn.onclick = triggerRelease;
+    if (versionChip) versionChip.onclick = triggerRelease;
+
+    // 9. Speichern mit Supabase
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichern...';
+        try {
+          if (typeof saveToSupabase === 'function' && window.state) {
+            await saveToSupabase(window.state);
+          }
+          saveBtn.textContent = '✅ Gespeichert!';
+          const saveInfo = document.getElementById('saveInfo');
+          if (saveInfo) {
+            const now = new Date();
+            saveInfo.textContent = 'Gespeichert · ' + now.toLocaleTimeString();
+          }
+        } catch(e) {
+          saveBtn.textContent = '❌ Fehler!';
+        }
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }, 1500);
+      };
+    }
+  }
+
+  // Sofortstart beim Laden
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(bootAppDirectly, 100));
+  } else {
+    setTimeout(bootAppDirectly, 100);
+  }
+})();// =========================================================================
 // KFZ-APP PATCH-V26: VOLLSTÄNDIGE EVENT-INITIALISIERUNG & SUPABASE-SYNC
 // =========================================================================
 
