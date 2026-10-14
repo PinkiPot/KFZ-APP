@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>KFZ-APP V26</title>
+  <title>KFZ-APP V26.07.26</title>
   <link id="favicon" rel="icon" href="">
   <style>
     :root{
@@ -37,8 +37,6 @@
     .hint{color:var(--muted);font-size:13px}
     .kbd{font-family:ui-monospace,monospace;border:1px solid var(--border);padding:2px 6px;border-radius:7px;background:var(--surface2)}
     
-    .demo-bar, .demo-users, .login-panel { display: none !important; }
-
     .app{min-height:100vh}
     .topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--primaryDark),var(--primary));color:#fff;padding:12px clamp(14px,3vw,28px);box-shadow:0 15px 35px rgba(0,0,0,.18)}
     .topbar-row{display:flex;gap:14px;align-items:center;justify-content:space-between;max-width:1800px;margin:0 auto}
@@ -135,12 +133,24 @@
     .modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface2)}
   </style>
 
-  <!-- Supabase JS CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
-  <!-- Die App-Ansicht ist hier direkt aktiv (ohne 'hidden') -->
+  <!-- Unsichtbare Login-Elemente für native Event-Verarbeitung von app.js -->
+  <div id="loginView" style="display:none!important;">
+    <div class="login-panel">
+      <div class="login-grid">
+        <input id="loginUser" value="Admin">
+        <input id="loginPass" type="password" value="admin">
+        <button id="loginBtn">Einloggen</button>
+      </div>
+      <div class="demo-users">
+        <button class="quick-login" data-user="admin">Admin</button>
+      </div>
+    </div>
+  </div>
+
   <div id="appView" class="app">
     <header class="topbar" id="top">
       <div class="topbar-row">
@@ -157,6 +167,7 @@
           <span class="version-chip" id="saveInfo"></span>
           <button id="darkToggle" class="secondary">🌙</button>
           <button id="saveBtn" class="secondary">Speichern</button>
+          <button id="logoutBtn" class="secondary" style="display:none;">Logout</button>
         </div>
       </div>
     </header>
@@ -164,6 +175,7 @@
     <main id="main"></main>
     <button class="release-float secondary" id="releaseBtn" style="display:none;">📝 Release Notes</button>
     <div class="floating-gear" id="settingsGear" style="display:none;"><span class="gear-symbol">⚙</span></div>
+    <div class="demo-bar" id="demoBar" style="display:none!important;"></div>
   </div>
 
   <div id="modalRoot"></div>
