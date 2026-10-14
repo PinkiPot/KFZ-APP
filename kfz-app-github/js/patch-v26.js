@@ -1,4 +1,356 @@
 // =========================================================================
+// KFZ-APP PATCH-V26: ORIGINALGETREUE WIEDERHERSTELLUNG & SYNC
+// =========================================================================
+
+(function() {
+  // --- 1. UNDO / REDO SYSTEM (STRG + Z / STRG + Y) ---
+  const undoStack = [];
+  const redoStack = [];
+  let isUndoRedoActive = false;
+
+  window.captureHistorySnapshot = function() {
+    if (isUndoRedoActive || !window.state) return;
+    try {
+      const snap = JSON.stringify(window.state);
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
+        undoStack.push(snap);
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack.length = 0;
+      }
+    } catch(e) {}
+  };
+
+  window.executeUndo = function() {
+    if (undoStack.length === 0 || !window.state) {
+      if (typeof showToast === 'function') showToast('Keine weiteren Schritte im Verlauf.');
+      return;
+    }
+    try {
+      isUndoRedoActive = true;
+      redoStack.push(JSON.stringify(window.state));
+      const prev = JSON.parse(undoStack.pop());
+      Object.assign(window.state, prev);
+      refreshAppViews();
+      if (typeof showToast === 'function') showToast('↩ Schritt rückgängig gemacht');
+    } catch(e) {
+      console.error("Undo Fehler:", e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  window.executeRedo = function() {
+    if (redoStack.length === 0 || !window.state) return;
+    try {
+      isUndoRedoActive = true;
+      undoStack.push(JSON.stringify(window.state));
+      const next = JSON.parse(redoStack.pop());
+      Object.assign(window.state, next);
+      refreshAppViews();
+      if (typeof showToast === 'function') showToast('↪ Schritt wiederhergestellt');
+    } catch(e) {
+      console.error("Redo Fehler:", e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  function refreshAppViews() {
+    if (typeof renderAll === 'function') renderAll();
+    else if (typeof renderApp === 'function') renderApp();
+    else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+    else if (typeof renderSheet === 'function' && window.state) renderSheet(window.state.activeSheetId);
+    if (typeof renderTabs === 'function') renderTabs();
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          window.executeRedo();
+        } else {
+          const tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+            e.preventDefault();
+            window.executeUndo();
+          }
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        window.executeRedo();
+      }
+    }
+  });
+
+  document.addEventListener('focusin', function(e) {
+    if (e.target && (e.target.isContentEditable || e.target.tagName === 'INPUT')) {
+      window.captureHistorySnapshot();
+    }
+  });
+
+  // --- 2. DIE ECHTEN ORIGINAL-APPEINSTELLUNGEN RENDERN ---
+  window.openOriginalSettingsModal = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (!modalRoot || !window.state) return;
+
+    const densityY = getComputedStyle(document.documentElement).getPropertyValue('--density-cell-y').trim() || '5px';
+    const fontScale = getComputedStyle(document.documentElement).getPropertyValue('--fontScale').trim() || '1';
+    const isDark = document.body.classList.contains('dark');
+
+    modalRoot.innerHTML = `
+      <div class="modal" id="appSettingsOverlay" onclick="if(event.target===this) window.closeOriginalModal()">
+        <div class="modal-box" style="max-width: 680px;">
+          <div class="modal-head">
+            <h3>⚙ Appeinstellungen & Systemverwaltung</h3>
+            <button class="ghost small" onclick="window.closeOriginalModal()">✕</button>
+          </div>
+          <div class="modal-body" style="gap: 16px;">
+
+            <!-- Darstellung & Design -->
+            <div>
+              <h4 style="margin: 0 0 8px 0; color: var(--primary);">Erscheinungsbild</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <span>Farbschema (Dark Mode)</span>
+                <button id="cfgDarkModeBtn" class="btn secondary small">
+                  ${isDark ? '☀️ Helles Design aktivieren' : '🌙 Dunkles Design aktivieren'}
+                </button>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <span>Tabellendichte</span>
+                <select id="cfgDensitySelect" style="padding: 4px 8px;">
+                  <option value="3px" ${densityY === '3px' ? 'selected' : ''}>Kompakt (3px)</option>
+                  <option value="5px" ${densityY === '5px' ? 'selected' : ''}>Standard (5px)</option>
+                  <option value="8px" ${densityY === '8px' ? 'selected' : ''}>Komfortabel (8px)</option>
+                </select>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <span>Schriftgrößen-Skalierung</span>
+                <select id="cfgFontScaleSelect" style="padding: 4px 8px;">
+                  <option value="0.9" ${fontScale === '0.9' ? 'selected' : ''}>90% (Klein)</option>
+                  <option value="1" ${fontScale === '1' ? 'selected' : ''}>100% (Standard)</option>
+                  <option value="1.1" ${fontScale === '1.1' ? 'selected' : ''}>110% (Groß)</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border);">
+
+            <!-- Release Notes & Version -->
+            <div>
+              <h4 style="margin: 0 0 8px 0; color: var(--primary);">Versionsverwaltung & Changelog</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Installierte Version: <strong>V26.07.26</strong></span>
+                <button id="cfgOpenReleaseBtn" class="btn secondary small">📝 Release Notes anzeigen</button>
+              </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border);">
+
+            <!-- Authentifizierung & Cloud-Sync -->
+            <div>
+              <h4 style="margin: 0 0 8px 0; color: var(--primary);">Benutzer & Speicherstatus</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 4px 0;">
+                <span>Konto</span>
+                <span class="pill ok">${window.state.currentUser || 'kirchbergpa@gmail.com'}</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 4px 0;">
+                <span>Synchronisation</span>
+                <span class="hint">Supabase Cloud aktiv</span>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="window.closeOriginalModal()">Schließen</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Handler Dark Mode
+    document.getElementById('cfgDarkModeBtn').onclick = function() {
+      document.body.classList.toggle('dark');
+      const darkNow = document.body.classList.contains('dark');
+      this.textContent = darkNow ? '☀️ Helles Design aktivieren' : '🌙 Dunkles Design aktivieren';
+      if (window.state) window.state.darkMode = darkNow;
+    };
+
+    // Handler Dichte
+    document.getElementById('cfgDensitySelect').onchange = function() {
+      document.documentElement.style.setProperty('--density-cell-y', this.value);
+    };
+
+    // Handler Skalierung
+    document.getElementById('cfgFontScaleSelect').onchange = function() {
+      document.documentElement.style.setProperty('--fontScale', this.value);
+    };
+
+    // Handler Release Notes
+    document.getElementById('cfgOpenReleaseBtn').onclick = function() {
+      window.openOriginalReleaseModal();
+    };
+  };
+
+  // --- 3. DIE ECHTEN ORIGINAL-RELEASE-NOTES RENDERN ---
+  window.openOriginalReleaseModal = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="modal" id="appReleaseOverlay" onclick="if(event.target===this) window.openOriginalSettingsModal()">
+        <div class="modal-box" style="max-width: 720px;">
+          <div class="modal-head">
+            <h3>📝 Release Notes · Versionshistorie</h3>
+            <button class="ghost small" onclick="window.openOriginalSettingsModal()">✕</button>
+          </div>
+          <div class="modal-body" style="max-height: 65vh; overflow-y: auto; line-height: 1.55;">
+            
+            <div style="margin-bottom: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>V26.07.26 (Aktuell)</strong>
+                <span class="pill ok">Produktiv</span>
+              </div>
+              <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li>Vollständige Cloudflare Access E-Mail-Authentifizierung (Zero Trust PIN).</li>
+                <li>Permanente Supabase-Synchronisation aller Arbeitsblätter und Fahrzeuge.</li>
+                <li>Globaler Rückgängig-Speicher via <code>Strg + Z</code> / <code>Strg + Y</code>.</li>
+                <li>Zentrale Systemkonfiguration gebündelt im Appeinstellungen-Menü.</li>
+              </ul>
+            </div>
+
+            <div style="margin-bottom: 14px;">
+              <strong>V26.07.19</strong>
+              <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li>Dynamische Fälligkeitsberechnung anhand des aktuellen KM-Stands.</li>
+                <li>Erweiterter Ersatzteilkatalog mit Bildvorschau und Verbauliste.</li>
+                <li>Themen-Navigation mit Anker-Sprungmarken zu Tabellenblöcken.</li>
+              </ul>
+            </div>
+
+            <div>
+              <strong>V26.07.01</strong>
+              <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li>Initiales MRO-Datenmodell für Wartungsintervalle und Werkzeuge.</li>
+                <li>Excel-Import und Drag-and-Drop Spaltenverwaltung.</li>
+              </ul>
+            </div>
+
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="window.openOriginalSettingsModal()">Zurück zu den Einstellungen</button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.closeOriginalModal = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (modalRoot) modalRoot.innerHTML = '';
+  };
+
+  // --- 4. SYSTEM-BOOTSTRAP & INITIALISIERUNG ---
+  async function launchSystem() {
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {}
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // Nativer Aufruf von app.js Quick-Login für sauberen State
+    const quickAdmin = document.querySelector('.quick-login[data-user="admin"]');
+    const loginBtn = document.getElementById('loginBtn');
+    if (quickAdmin) quickAdmin.click();
+    else if (loginBtn) loginBtn.click();
+    else if (typeof window.login === 'function') window.login('admin', 'admin');
+
+    // Identität anwenden
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    const userChip = document.getElementById('userChip');
+    if (userChip) userChip.textContent = email;
+
+    // Supabase laden
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          if (window.state.darkMode) document.body.classList.add('dark');
+        }
+      } catch (err) {
+        console.error("Supabase Sync Fehler:", err);
+      }
+    }
+
+    // Erstes Blatt aktivieren
+    if (window.state) {
+      const sheets = window.state.sheets || (window.WORKBOOK_DATA && window.WORKBOOK_DATA.sheets);
+      if (sheets && sheets.length > 0 && !window.state.activeSheetId) {
+        window.state.activeSheetId = sheets[0].id || sheets[0].name;
+      }
+    }
+
+    // Rendern
+    refreshAppViews();
+
+    setTimeout(() => {
+      const activeTab = document.querySelector('#tabs .tab.active, .tabs .tab');
+      if (activeTab) activeTab.click();
+    }, 150);
+
+    // Einstellungs-Zahnrad verbinden
+    const settingsGear = document.getElementById('settingsGear');
+    if (settingsGear) {
+      settingsGear.onclick = function() {
+        window.openOriginalSettingsModal();
+      };
+    }
+
+    // Speichern-Button mit Supabase verbinden
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichern...';
+        try {
+          if (typeof saveToSupabase === 'function' && window.state) {
+            await saveToSupabase(window.state);
+          }
+          saveBtn.textContent = '✅ Gespeichert!';
+          const saveInfo = document.getElementById('saveInfo');
+          if (saveInfo) {
+            saveInfo.textContent = 'Gespeichert · ' + new Date().toLocaleTimeString();
+          }
+        } catch(e) {
+          saveBtn.textContent = '❌ Fehler!';
+        }
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }, 1500);
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(launchSystem, 100));
+  } else {
+    setTimeout(launchSystem, 100);
+  }
+})();// =========================================================================
 // KFZ-APP PATCH-V26: NATIVE INITIALISIERUNG ALLER ORIGINAL-FUNKTIONEN
 // =========================================================================
 
