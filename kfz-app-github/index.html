@@ -37,8 +37,7 @@
     .hint{color:var(--muted);font-size:13px}
     .kbd{font-family:ui-monospace,monospace;border:1px solid var(--border);padding:2px 6px;border-radius:7px;background:var(--surface2)}
     
-    /* Demo-Elemente dauerhaft ausblenden */
-    .login-panel, .demo-bar, .demo-users { display: none !important; }
+    .demo-bar, .demo-users, .login-panel { display: none !important; }
 
     .app{min-height:100vh}
     .topbar{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--primaryDark),var(--primary));color:#fff;padding:12px clamp(14px,3vw,28px);box-shadow:0 15px 35px rgba(0,0,0,.18)}
@@ -80,4 +79,100 @@
     .topic-nav a{white-space:nowrap;text-decoration:none;background:var(--secondary);color:var(--primary);padding:7px 10px;border-radius:999px;font-weight:800}
     .topic-stack{display:grid;gap:16px}
     .topic-card{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);overflow:hidden;resize:both;max-width:100%;min-width:360px}
-    .topic-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:linear-gradient(180deg
+    .topic-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:12px 14px;background:linear-gradient(180deg,var(--surface),var(--surface2));border-bottom:1px solid var(--border);cursor:grab}
+    .topic-head h3{margin:0;color:var(--primary);font-size:18px}
+    .topic-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+    .topic-card.collapsed .topic-body,.topic-card.collapsed .topic-foot{display:none}
+    .topic-body{overflow:auto}
+    .table-wrap{overflow:auto;max-height:70vh}
+    .kfz-table{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;min-width:max-content;color:var(--tableText)}
+    .kfz-table th{background:var(--secondary);color:var(--headText);border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:6px 7px;text-align:center;vertical-align:middle;font-weight:900;min-width:72px;max-width:220px}
+    .kfz-table thead tr:first-child th{background:color-mix(in srgb,var(--primary) 14%, var(--secondary))}
+    .kfz-table th[contenteditable=true]{outline:2px solid #f0c85a;background:var(--accent)!important}
+    .row-tools{width:38px;min-width:38px;position:sticky;left:0;z-index:3;background:var(--surface2)!important}
+    .kfz-table td{position:relative;background:var(--cellBg,var(--surface));border-right:1px solid var(--border);border-bottom:1px solid var(--border);padding:var(--density-cell-y) var(--density-cell-x);vertical-align:top;min-width:72px;max-width:260px}
+    .kfz-table td.status-ok{background:var(--success)!important}
+    .kfz-table td.status-warn{background:var(--warning)!important}
+    .kfz-table td.status-danger{background:var(--danger)!important}
+    .kfz-table tr:nth-child(even) td:not(.row-tools):not([style*="--cellBg"]){background:color-mix(in srgb,var(--surface) 88%, var(--surface2))}
+    .cell-inner{min-height:23px;display:flex;align-items:center;gap:5px}
+    .cell-text{overflow:hidden;text-overflow:ellipsis;white-space:normal}
+    .cell-text.editing{background:var(--accent);outline:2px solid #e0b93c;border-radius:7px;padding:3px;min-width:70px}
+    .cell-link{font-weight:800;text-decoration:underline;color:var(--primary)}
+    .cell-img{max-width:76px;max-height:54px;border-radius:8px;object-fit:contain;border:1px solid var(--border);background:#fff}
+    .cell-icons{margin-left:auto;display:flex;gap:3px;opacity:0}
+    .kfz-table td:hover .cell-icons{opacity:1}
+    .cell-icon{font-size:11px;background:var(--secondary);color:var(--primary);border:0;border-radius:7px;padding:3px 5px;box-shadow:none}
+    .note-dot{width:9px;height:9px;border-radius:50%;background:#f59e0b;flex:0 0 auto}
+    .formula-dot{font-size:11px;color:#7c3aed;font-weight:900}
+    .bar{position:absolute;left:0;top:0;bottom:0;border-radius:4px;background:color-mix(in srgb,var(--primary) 18%, transparent);pointer-events:none}
+    .row-handle{cursor:grab;background:var(--secondary);color:var(--primary);border-radius:8px;padding:4px 6px}
+    .insert-row td{padding:3px!important;background:var(--surface2)!important}
+    .insert-row button{width:100%;background:transparent;color:var(--muted);border:1px dashed var(--border);box-shadow:none}
+    .topic-foot{display:flex;gap:7px;flex-wrap:wrap;padding:10px 12px;border-top:1px solid var(--border);background:var(--surface2)}
+
+    .file-section,.catalog-section{background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow);padding:14px;margin-bottom:16px}
+    .section-head{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:10px}
+    .section-head h3{margin:0;color:var(--primary)}
+    .tree{display:grid;gap:4px}
+    .tree-row{display:flex;align-items:center;gap:8px;border:1px solid var(--border);background:var(--surface2);border-radius:12px;padding:8px 10px;margin:4px 0;cursor:pointer}
+    .tree-row .thumb{width:36px;height:30px;object-fit:cover;border-radius:8px;background:var(--secondary);display:grid;place-items:center;color:var(--primary);font-weight:900}
+    .tree-children{margin-left:28px;border-left:2px dashed var(--border);padding-left:10px}
+    .path-line{font-size:13px;color:var(--muted);font-weight:800;margin:6px 0 12px}
+    .catalog-grid{display:grid;grid-template-columns:minmax(280px,460px) 1fr;gap:16px}
+    .catalog-table{width:100%;border-collapse:collapse}
+    .catalog-table th,.catalog-table td{border-bottom:1px solid var(--border);padding:8px;text-align:left}
+    .catalog-table th{background:var(--secondary);color:var(--primary)}
+    .catalog-preview{width:90px;height:64px;object-fit:contain;border:1px solid var(--border);border-radius:10px;background:#fff}
+    .jump-link{font-weight:900;text-decoration:underline;color:var(--primary);cursor:pointer}
+    .highlight-row{outline:3px solid color-mix(in srgb,var(--primary) 35%, transparent);outline-offset:-3px;background:var(--accent)!important}
+
+    .modal{position:fixed;inset:0;background:rgba(10,20,35,.55);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;z-index:90;padding:16px}
+    .modal-box{background:var(--surface);border:1px solid var(--border);border-radius:24px;box-shadow:var(--shadow);width:min(900px,96vw);max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+    .modal-head{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid var(--border);background:var(--surface2)}
+    .modal-head h3{margin:0;color:var(--primary)}
+    .modal-body{padding:16px 18px;overflow:auto;display:grid;gap:14px}
+    .modal-foot{padding:12px 18px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--surface2)}
+  </style>
+
+  <!-- Supabase JS CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+  <!-- Die App-Ansicht ist hier direkt aktiv (ohne 'hidden') -->
+  <div id="appView" class="app">
+    <header class="topbar" id="top">
+      <div class="topbar-row">
+        <div class="brand">
+          <img id="appLogo" alt="Logo">
+          <div class="brand-title">
+            <h1>KFZ-APP</h1>
+            <span>Wartung · Teile · Werkzeug · Katalog</span>
+          </div>
+        </div>
+        <div class="top-actions">
+          <span class="version-chip">V26.07.26</span>
+          <span class="user-chip" id="userChip">kirchbergpa@gmail.com</span>
+          <span class="version-chip" id="saveInfo"></span>
+          <button id="darkToggle" class="secondary">🌙</button>
+          <button id="saveBtn" class="secondary">Speichern</button>
+        </div>
+      </div>
+    </header>
+    <nav class="tabs" id="tabs"></nav>
+    <main id="main"></main>
+    <button class="release-float secondary" id="releaseBtn" style="display:none;">📝 Release Notes</button>
+    <div class="floating-gear" id="settingsGear" style="display:none;"><span class="gear-symbol">⚙</span></div>
+  </div>
+
+  <div id="modalRoot"></div>
+  <div class="toast-stack" id="toastStack"></div>
+
+  <!-- Skripte -->
+  <script src="js/supabase-client.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/app.js"></script>
+  <script src="js/patch-v26.js"></script>
+</body>
+</html>
