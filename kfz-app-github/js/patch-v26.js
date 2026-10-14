@@ -1,4 +1,198 @@
 // =========================================================================
+// KFZ-APP PATCH-V26: NATIVE INITIALISIERUNG ALLER ORIGINAL-FUNKTIONEN
+// =========================================================================
+
+(function() {
+  // --- GLOBALER UNDO / REDO STACK (STRG + Z / STRG + Y) ---
+  const undoStack = [];
+  const redoStack = [];
+  let isUndoRedoActive = false;
+
+  window.recordAppSnapshot = function() {
+    if (isUndoRedoActive || !window.state) return;
+    try {
+      const snap = JSON.stringify(window.state);
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
+        undoStack.push(snap);
+        if (undoStack.length > 35) undoStack.shift();
+        redoStack.length = 0;
+      }
+    } catch(e) {}
+  };
+
+  window.triggerUndo = function() {
+    if (undoStack.length === 0 || !window.state) {
+      if (typeof showToast === 'function') showToast('Keine weiteren Schritte zum Rückgängigmachen.');
+      return;
+    }
+    try {
+      isUndoRedoActive = true;
+      redoStack.push(JSON.stringify(window.state));
+      const prev = JSON.parse(undoStack.pop());
+      Object.assign(window.state, prev);
+      if (typeof renderAll === 'function') renderAll();
+      else if (typeof renderApp === 'function') renderApp();
+      else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+      if (typeof showToast === 'function') showToast('↩ Schritt rückgängig gemacht');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  window.triggerRedo = function() {
+    if (redoStack.length === 0 || !window.state) return;
+    try {
+      isUndoRedoActive = true;
+      undoStack.push(JSON.stringify(window.state));
+      const nxt = JSON.parse(redoStack.pop());
+      Object.assign(window.state, nxt);
+      if (typeof renderAll === 'function') renderAll();
+      else if (typeof renderApp === 'function') renderApp();
+      else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+      if (typeof showToast === 'function') showToast('↪ Schritt wiederhergestellt');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.shiftKey) { e.preventDefault(); window.triggerRedo(); }
+        else {
+          const tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+            e.preventDefault();
+            window.triggerUndo();
+          }
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        window.triggerRedo();
+      }
+    }
+  });
+
+  document.addEventListener('focusin', function(e) {
+    if (e.target && (e.target.isContentEditable || e.target.tagName === 'INPUT')) {
+      window.recordAppSnapshot();
+    }
+  });
+
+  // --- NATIVE SYSTEM-BOOTSTRAP ---
+  async function startOriginalApp() {
+    // 1. Cloudflare Access Benutzer ermitteln
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {}
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // 2. Den echten Login von app.js ausführen (baut den kompletten State & Listener auf)
+    const quickAdmin = document.querySelector('.quick-login[data-user="admin"]');
+    const loginBtn = document.getElementById('loginBtn');
+    if (quickAdmin) quickAdmin.click();
+    else if (loginBtn) loginBtn.click();
+    else if (typeof window.login === 'function') window.login('admin', 'admin');
+
+    // 3. Benutzerdaten setzen
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    const userChip = document.getElementById('userChip');
+    if (userChip) userChip.textContent = email;
+
+    // 4. Supabase-Daten synchronisieren
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          if (window.state.darkMode) document.body.classList.add('dark');
+        }
+      } catch (err) {
+        console.error("Supabase Sync Fehler:", err);
+      }
+    }
+
+    // 5. Erstes Blatt aktiv schalten & Komplett rendern
+    if (window.state) {
+      const sheets = window.state.sheets || (window.WORKBOOK_DATA && window.WORKBOOK_DATA.sheets);
+      if (sheets && sheets.length > 0 && !window.state.activeSheetId) {
+        window.state.activeSheetId = sheets[0].id || sheets[0].name;
+      }
+    }
+
+    // Ruft die echten Render-Routinen von app.js auf
+    if (typeof renderTabs === 'function') renderTabs();
+    if (typeof renderAll === 'function') renderAll();
+    else if (typeof renderApp === 'function') renderApp();
+    else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+    else if (typeof renderSheet === 'function' && window.state) renderSheet(window.state.activeSheetId);
+
+    // Ersten Reiter aktivieren
+    setTimeout(() => {
+      const activeTab = document.querySelector('#tabs .tab.active, .tabs .tab');
+      if (activeTab) activeTab.click();
+    }, 150);
+
+    // 6. Die originalen Appeinstellungen von app.js öffnen
+    const settingsGear = document.getElementById('settingsGear');
+    if (settingsGear) {
+      settingsGear.onclick = function() {
+        if (typeof openSettingsModal === 'function') openSettingsModal();
+        else if (typeof renderSettingsModal === 'function') renderSettingsModal();
+        else if (typeof openSettings === 'function') openSettings();
+        else if (typeof showSettings === 'function') showSettings();
+      };
+    }
+
+    // 7. Speichern mit Supabase
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        const origText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichern...';
+        try {
+          if (typeof saveToSupabase === 'function' && window.state) {
+            await saveToSupabase(window.state);
+          }
+          saveBtn.textContent = '✅ Gespeichert!';
+          const saveInfo = document.getElementById('saveInfo');
+          if (saveInfo) {
+            saveInfo.textContent = 'Gespeichert · ' + new Date().toLocaleTimeString();
+          }
+        } catch(e) {
+          saveBtn.textContent = '❌ Fehler!';
+        }
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = origText;
+        }, 1500);
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(startOriginalApp, 100));
+  } else {
+    setTimeout(startOriginalApp, 100);
+  }
+})();// =========================================================================
 // KFZ-APP PATCH-V26: ZENTRALE EINSTELLUNGEN & STRG + Z (UNDO/REDO)
 // =========================================================================
 
