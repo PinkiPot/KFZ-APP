@@ -1,4 +1,85 @@
 // ==========================================
+// KFZ-APP PATCH-V26: CLOUDFLARE AUTH & UNHIDE APP
+// ==========================================
+
+(function() {
+  // 1. Demo-Leiste und Dummy-Logins unsichtbar schalten
+  const hideStyle = document.createElement('style');
+  hideStyle.innerHTML = `
+    .login-panel, .demo-bar, .demo-users { display: none !important; }
+    #demoBar { display: none !important; }
+  `;
+  document.head.appendChild(hideStyle);
+
+  // 2. Hauptanwendung sichtbar schalten und initialisieren
+  async function unlockAndRenderApp() {
+    // Entfernt das 'hidden' von appView, damit die Seite nicht mehr weiß ist
+    const appView = document.getElementById('appView');
+    if (appView) {
+      appView.classList.remove('hidden');
+    }
+
+    // Demo-Login-Container ausblenden, falls noch im DOM
+    const loginPanels = document.querySelectorAll('.login-panel');
+    loginPanels.forEach(el => el.style.setProperty('display', 'none', 'important'));
+
+    // Echte Cloudflare-Identität ermitteln
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {
+      console.log("Cloudflare Access lokal/Fallback:", e);
+    }
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // App-Status auf echten Admin setzen
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    // Benutzer-Chip im Header mit deiner echten E-Mail beschriften
+    const userChip = document.getElementById('userChip') || document.querySelector('.user-chip');
+    if (userChip) {
+      userChip.textContent = email;
+    }
+
+    // Echte Daten aus Supabase laden und Anzeige aktualisieren
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+        }
+      } catch (err) {
+        console.error("Fehler beim Laden aus Supabase:", err);
+      }
+    }
+
+    // Render-Funktion der Original-App aufrufen
+    if (typeof renderApp === 'function') {
+      renderApp();
+    } else if (typeof renderAll === 'function') {
+      renderAll();
+    } else if (typeof renderTabs === 'function') {
+      renderTabs();
+    }
+  }
+
+  // Direkt beim Starten ausführen
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', unlockAndRenderApp);
+  } else {
+    unlockAndRenderApp();
+  }
+})();// ==========================================
 // KFZ-APP PATCH-V26: AUTO-LOGIN & CLOUDFLARE SYNC
 // ==========================================
 
