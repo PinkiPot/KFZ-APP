@@ -1,4 +1,344 @@
 // =========================================================================
+// KFZ-APP PATCH-V26: ORIGINAL INITIALISIERUNG, SETTINGS, SYNC & STRG+Z
+// =========================================================================
+
+(function() {
+  // --- 1. VERLAUFSSPEICHER (STRG + Z / STRG + Y) ---
+  const undoStack = [];
+  const redoStack = [];
+  let isUndoRedoActive = false;
+
+  window.recordAppSnapshot = function() {
+    if (isUndoRedoActive || !window.state) return;
+    try {
+      const snap = JSON.stringify(window.state);
+      if (undoStack.length === 0 || undoStack[undoStack.length - 1] !== snap) {
+        undoStack.push(snap);
+        if (undoStack.length > 40) undoStack.shift();
+        redoStack.length = 0;
+      }
+    } catch(e) {}
+  };
+
+  window.executeUndo = function() {
+    if (undoStack.length === 0 || !window.state) {
+      if (typeof showToast === 'function') showToast('Keine weiteren Schritte im Verlauf.');
+      return;
+    }
+    try {
+      isUndoRedoActive = true;
+      redoStack.push(JSON.stringify(window.state));
+      const prev = JSON.parse(undoStack.pop());
+      Object.assign(window.state, prev);
+      refreshView();
+      if (typeof showToast === 'function') showToast('↩ Schritt rückgängig gemacht');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  window.executeRedo = function() {
+    if (redoStack.length === 0 || !window.state) return;
+    try {
+      isUndoRedoActive = true;
+      undoStack.push(JSON.stringify(window.state));
+      const next = JSON.parse(redoStack.pop());
+      Object.assign(window.state, next);
+      refreshView();
+      if (typeof showToast === 'function') showToast('↪ Schritt wiederhergestellt');
+    } catch(e) {
+      console.error(e);
+    } finally {
+      isUndoRedoActive = false;
+    }
+  };
+
+  function refreshView() {
+    if (typeof renderTabs === 'function') renderTabs();
+    if (typeof renderApp === 'function') renderApp();
+    else if (typeof renderAll === 'function') renderAll();
+    else if (typeof renderCurrentSheet === 'function') renderCurrentSheet();
+    else if (typeof renderSheet === 'function' && window.state) renderSheet(window.state.activeSheetId);
+  }
+
+  window.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+      if (e.key === 'z' || e.key === 'Z') {
+        if (e.shiftKey) {
+          e.preventDefault();
+          window.executeRedo();
+        } else {
+          const tag = (document.activeElement && document.activeElement.tagName) || '';
+          if (tag !== 'INPUT' && tag !== 'TEXTAREA') {
+            e.preventDefault();
+            window.executeUndo();
+          }
+        }
+      } else if (e.key === 'y' || e.key === 'Y') {
+        e.preventDefault();
+        window.executeRedo();
+      }
+    }
+  });
+
+  document.addEventListener('focusin', function(e) {
+    if (e.target && (e.target.isContentEditable || e.target.tagName === 'INPUT')) {
+      window.recordAppSnapshot();
+    }
+  });
+
+  // --- 2. ZENTRALES APPEINSTELLUNGEN-MODAL ---
+  window.openSettingsDialog = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (!modalRoot) return;
+
+    const isDark = document.body.classList.contains('dark');
+    const densityY = getComputedStyle(document.documentElement).getPropertyValue('--density-cell-y').trim() || '5px';
+    const fontScale = getComputedStyle(document.documentElement).getPropertyValue('--fontScale').trim() || '1';
+
+    modalRoot.innerHTML = `
+      <div class="modal" id="settingsOverlay" onclick="if(event.target===this) window.closeModalDialog()">
+        <div class="modal-box" style="max-width: 660px;">
+          <div class="modal-head">
+            <h3>⚙ Appeinstellungen & Systemverwaltung</h3>
+            <button class="ghost small" onclick="window.closeModalDialog()">✕</button>
+          </div>
+          <div class="modal-body" style="gap: 16px;">
+            
+            <div>
+              <h4 style="margin: 0 0 10px; color: var(--primary);">Erscheinungsbild & Layout</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <div>
+                  <strong>Farbschema</strong>
+                  <div class="hint">Dunkles oder helles Oberflächendesign</div>
+                </div>
+                <button id="setDarkBtn" class="btn secondary small">
+                  ${isDark ? '☀️ Helles Design' : '🌙 Dunkles Design'}
+                </button>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <div>
+                  <strong>Tabellendichte</strong>
+                  <div class="hint">Zeilenhöhe der Tabellen anpassen</div>
+                </div>
+                <select id="setDensity" style="padding: 4px 8px;">
+                  <option value="3px" ${densityY === '3px' ? 'selected' : ''}>Kompakt (3px)</option>
+                  <option value="5px" ${densityY === '5px' ? 'selected' : ''}>Standard (5px)</option>
+                  <option value="8px" ${densityY === '8px' ? 'selected' : ''}>Komfortabel (8px)</option>
+                </select>
+              </div>
+
+              <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0;">
+                <div>
+                  <strong>Schriftgröße</strong>
+                  <div class="hint">Skalierung aller Textinhalte</div>
+                </div>
+                <select id="setFontScale" style="padding: 4px 8px;">
+                  <option value="0.9" ${fontScale === '0.9' ? 'selected' : ''}>90% (Klein)</option>
+                  <option value="1" ${fontScale === '1' ? 'selected' : ''}>100% (Standard)</option>
+                  <option value="1.1" ${fontScale === '1.1' ? 'selected' : ''}>110% (Groß)</option>
+                </select>
+              </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border);">
+
+            <div>
+              <h4 style="margin: 0 0 8px; color: var(--primary);">Versionsinformation & Release Notes</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Installierte Version: <strong>V26.07.26</strong></span>
+                <button id="setReleaseBtn" class="btn secondary small">📝 Release Notes anzeigen</button>
+              </div>
+            </div>
+
+            <hr style="border:0; border-top:1px solid var(--border);">
+
+            <div>
+              <h4 style="margin: 0 0 8px; color: var(--primary);">Benutzerkonto & Cloud-Sync</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Angemeldet via Cloudflare</span>
+                <span class="pill ok">${(window.state && window.state.currentUser) || 'kirchbergpa@gmail.com'}</span>
+              </div>
+            </div>
+
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="window.closeModalDialog()">Schließen</button>
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('setDarkBtn').onclick = function() {
+      document.body.classList.toggle('dark');
+      const darkNow = document.body.classList.contains('dark');
+      this.textContent = darkNow ? '☀️ Helles Design' : '🌙 Dunkles Design';
+      if (window.state) window.state.darkMode = darkNow;
+    };
+
+    document.getElementById('setDensity').onchange = function() {
+      document.documentElement.style.setProperty('--density-cell-y', this.value);
+    };
+
+    document.getElementById('setFontScale').onchange = function() {
+      document.documentElement.style.setProperty('--fontScale', this.value);
+    };
+
+    document.getElementById('setReleaseBtn').onclick = function() {
+      window.openReleaseDialog();
+    };
+  };
+
+  // --- 3. RELEASE NOTES MODAL ---
+  window.openReleaseDialog = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (!modalRoot) return;
+
+    modalRoot.innerHTML = `
+      <div class="modal" id="releaseOverlay" onclick="if(event.target===this) window.openSettingsDialog()">
+        <div class="modal-box" style="max-width: 700px;">
+          <div class="modal-head">
+            <h3>📝 Release Notes · Versionshistorie</h3>
+            <button class="ghost small" onclick="window.openSettingsDialog()">✕</button>
+          </div>
+          <div class="modal-body" style="max-height: 65vh; overflow-y: auto; line-height: 1.6;">
+            <div style="margin-bottom: 14px;">
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <strong>V26.07.26 (Aktuell)</strong>
+                <span class="pill ok">Produktiv</span>
+              </div>
+              <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li>Cloudflare Access Integration: Sicherer PIN-Zugang ohne manuelle Login-Maske.</li>
+                <li>Supabase Synchronisation: Zuverlässiges Speichern aller KFZ-Reiter und Tabellendaten.</li>
+                <li>Verlaufsspeicher: Änderungen jederzeit mit <code>Strg + Z</code> / <code>Strg + Y</code> zurücknehmen.</li>
+                <li>Aufgeräumtes Design: Alle Systemfunktionen zentral im Appeinstellungen-Menü.</li>
+              </ul>
+            </div>
+            <div style="margin-bottom: 14px;">
+              <strong>V26.07.19</strong>
+              <ul style="margin: 6px 0 0 18px; padding: 0;">
+                <li>Dynamische Fälligkeitsberechnung anhand des aktuellen Fahrzeug-KM-Stands.</li>
+                <li>Katalog- und Bildvorschau für Ersatzteile und Werkzeuge.</li>
+                <li>Themen-Navigation mit Sprungmarken für schnelle Übersicht.</li>
+              </ul>
+            </div>
+          </div>
+          <div class="modal-foot">
+            <button class="btn" onclick="window.openSettingsDialog()">Zurück zu den Einstellungen</button>
+          </div>
+        </div>
+      </div>
+    `;
+  };
+
+  window.closeModalDialog = function() {
+    const modalRoot = document.getElementById('modalRoot');
+    if (modalRoot) modalRoot.innerHTML = '';
+  };
+
+  // --- 4. NATIVES BOOTING & INITIALISIERUNG ---
+  async function launchApplication() {
+    let email = "kirchbergpa@gmail.com";
+    try {
+      const res = await fetch('/cdn-cgi/access/get-identity');
+      if (res.ok) {
+        const idData = await res.json();
+        if (idData && idData.email) email = idData.email;
+      }
+    } catch(e) {}
+
+    const cleanId = 'cf_' + email.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+    // Nativer Aufruf von app.js Quick-Login
+    const quickAdmin = document.querySelector('.quick-login[data-user="admin"]');
+    const loginBtn = document.getElementById('loginBtn');
+    if (quickAdmin) quickAdmin.click();
+    else if (loginBtn) loginBtn.click();
+    else if (typeof window.login === 'function') window.login('admin', 'admin');
+
+    if (window.state) {
+      window.state.isAuthenticated = true;
+      window.state.currentUser = email;
+      window.state.currentUserId = cleanId;
+      window.state.currentUserRole = 'admin';
+    }
+
+    const userChip = document.getElementById('userChip');
+    if (userChip) userChip.textContent = email;
+
+    // Supabase laden
+    if (typeof loadFromSupabase === 'function') {
+      try {
+        const savedData = await loadFromSupabase();
+        if (savedData && window.state) {
+          Object.assign(window.state, savedData);
+          if (window.state.darkMode) document.body.classList.add('dark');
+        }
+      } catch (err) {
+        console.error("Supabase Sync Fehler:", err);
+      }
+    }
+
+    // Erstes Blatt aktivieren
+    if (window.state) {
+      const sheets = window.state.sheets || (window.WORKBOOK_DATA && window.WORKBOOK_DATA.sheets);
+      if (sheets && sheets.length > 0 && !window.state.activeSheetId) {
+        window.state.activeSheetId = sheets[0].id || sheets[0].name;
+      }
+    }
+
+    // Vollständiges Rendern
+    refreshView();
+
+    setTimeout(() => {
+      const activeTab = document.querySelector('#tabs .tab.active, #tabs .tab');
+      if (activeTab) activeTab.click();
+    }, 150);
+
+    // Zahnrad unten rechts verdrahten
+    const settingsGear = document.getElementById('settingsGear');
+    if (settingsGear) {
+      settingsGear.onclick = function() {
+        window.openSettingsDialog();
+      };
+    }
+
+    // Speichern-Button mit Supabase verbinden
+    const saveBtn = document.getElementById('saveBtn');
+    if (saveBtn) {
+      saveBtn.onclick = async function() {
+        const originalText = saveBtn.textContent;
+        saveBtn.disabled = true;
+        saveBtn.textContent = '⏳ Speichern...';
+        try {
+          if (typeof saveToSupabase === 'function' && window.state) {
+            await saveToSupabase(window.state);
+          }
+          saveBtn.textContent = '✅ Gespeichert!';
+          const saveInfo = document.getElementById('saveInfo');
+          if (saveInfo) {
+            saveInfo.textContent = 'Gespeichert · ' + new Date().toLocaleTimeString();
+          }
+        } catch(e) {
+          saveBtn.textContent = '❌ Fehler!';
+        }
+        setTimeout(() => {
+          saveBtn.disabled = false;
+          saveBtn.textContent = originalText;
+        }, 1500);
+      };
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(launchApplication, 100));
+  } else {
+    setTimeout(launchApplication, 100);
+  }
+})();// =========================================================================
 // KFZ-APP PATCH-V26: ORIGINALGETREUE WIEDERHERSTELLUNG & SYNC
 // =========================================================================
 
